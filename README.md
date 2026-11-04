@@ -59,10 +59,9 @@ Copy the sample environment file and configure local values:
 cp .env.example .env
 ```
 
-### 2. Running with Docker Compose (coming in P0-02)
-*(coming in P0-02)*
+### 2. Running with Docker Compose
+Run the entire local stack with a single command:
 ```bash
-# coming in P0-02
 docker compose up --build
 ```
 This boots:
@@ -72,28 +71,22 @@ This boots:
 - Redis on port `6379`
 - Background worker listening to Redis queue
 
-### 3. Local Development (Alternative — coming in P0-02)
-*(coming in P0-02)*
+### 3. Local Development (Alternative)
 
-**API Backend (coming in P0-02):**
+**API Backend:**
 ```bash
 cd apps/api
-python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-**Worker (coming in P0-02):**
+**Worker:**
 ```bash
 cd apps/worker
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
 python -m worker.main
 ```
 
-**Web Frontend (coming in P0-02):**
+**Web Frontend (coming in P0-05):**
 ```bash
 cd apps/web
 npm install

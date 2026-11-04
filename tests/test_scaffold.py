@@ -1,7 +1,7 @@
 """Tests verifying repository scaffold and initial configuration (P0-01)."""
 
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 
 class TestScaffold(unittest.TestCase):
@@ -101,4 +101,3 @@ class TestScaffold(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

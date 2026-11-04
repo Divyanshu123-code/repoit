@@ -1,2 +1,1 @@
 """RepoPilot API tests."""
-

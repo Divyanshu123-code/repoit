@@ -4,7 +4,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 
 ## Phase 0 — Foundation (week 1–2)
 - [x] P0-01 Monorepo scaffold (`apps/web`, `apps/api`, `apps/worker`, `packages/ml`, `docs`, `infra`). AC: tree matches ARCHITECTURE; README with run steps.
-- [ ] P0-02 Docker Compose: api, worker, web, postgres+pgvector, redis. AC: `docker compose up` brings all healthy; `/healthz` returns 200.
+- [x] P0-02 Docker Compose: api, worker, web, postgres+pgvector, redis. AC: `docker compose up` brings all healthy; `/healthz` returns 200.
 - [x] P0-03 FastAPI skeleton: settings, logging, DB session, Alembic init. AC: migration runs; pytest hits `/healthz`.
 - [ ] P0-04 CI (GitHub Actions): ruff, mypy, pytest, web build. AC: failing lint blocks merge.
 - [ ] P0-05 React + TS shell with routing + API client. AC: page shows API health.
