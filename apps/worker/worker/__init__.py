@@ -1,2 +1,1 @@
 """RepoPilot AI background worker."""
-
