@@ -18,7 +18,7 @@ RepoPilot AI connects to a Python repository, indexes it (Tree-sitter), answers 
 10. If a requirement is ambiguous, stop and ask; do not guess.
 
 ## Conventions
-- Python 3.11, FastAPI, SQLAlchemy 2.x, Alembic, Pydantic v2. Full type hints; `mypy --strict` on `app/`.
+- Python 3.12, FastAPI, SQLAlchemy 2.x, Alembic, Pydantic v2. Full type hints; `mypy --strict` on `app/`.
 - Format/lint: `ruff format` + `ruff check`. Tests: `pytest -q`. All must pass before commit.
 - Frontend: React + TypeScript (strict), Vite, TanStack Query.
 - Commits: Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `chore:`). One branch per backlog item: `feat/P1-03-file-filter`.
