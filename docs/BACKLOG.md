@@ -7,7 +7,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P0-02 Docker Compose: api, worker, web, postgres+pgvector, redis. AC: `docker compose up` brings all healthy; `/healthz` returns 200.
 - [x] P0-03 FastAPI skeleton: settings, logging, DB session, Alembic init. AC: migration runs; pytest hits `/healthz`.
 - [x] P0-04 CI (GitHub Actions): ruff, mypy, pytest, web build. AC: failing lint blocks merge.
-- [ ] P0-05 React + TS shell with routing + API client. AC: page shows API health.
+- [x] P0-05 React + TS shell with routing + API client. AC: page shows API health.
 - [ ] P0-06 Lock open decisions in DECISIONS.md. AC: no "open" items remain.
 
 ## Phase 1 — Ingestion & parsing (week 3–4)

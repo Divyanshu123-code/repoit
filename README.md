@@ -86,7 +86,7 @@ cd apps/worker
 python -m worker.main
 ```
 
-**Web Frontend (coming in P0-05):**
+**Web Frontend:**
 ```bash
 cd apps/web
 npm install
