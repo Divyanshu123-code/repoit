@@ -25,8 +25,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/repopilot"
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    # Repository ingestion safety limits (P1-02)
+    # Repository ingestion safety limits (P1-02, P1-03)
     REPO_MAX_SIZE_BYTES: int = 100 * 1024 * 1024  # 100 MB
+    REPO_MAX_FILE_SIZE_BYTES: int = 1 * 1024 * 1024  # 1 MB per file
     REPO_FETCH_TIMEOUT_SECONDS: int = 60
     REPO_TEMP_BASE_DIR: str | None = None
 
