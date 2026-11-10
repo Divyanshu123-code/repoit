@@ -33,7 +33,11 @@ class FakeEmbeddingProvider(EmbeddingProvider):
         return self._dimension
 
     def _generate_deterministic_vector(self, text: str) -> list[float]:
-        """Generate a reproducible, unit-normalized float vector based on text content."""
+        """Generate a reproducible, unit-normalized float vector based on text content.
+
+        Combines full-text hash with token feature hashing so texts sharing terms
+        have positive semantic similarity in tests and retrieval evaluation.
+        """
         if text in self._custom_embeddings:
             custom_vec = self._custom_embeddings[text]
             if len(custom_vec) != self._dimension:
@@ -42,25 +46,31 @@ class FakeEmbeddingProvider(EmbeddingProvider):
                 )
             return custom_vec
 
-        # Use SHA-256 stream to generate deterministic pseudo-random values
-        vec: list[float] = []
+        vec = [0.0] * self._dimension
+
+        # 1. Base component from full-text SHA-256
         seed = hashlib.sha256(text.encode("utf-8")).digest()
-        counter = 0
+        for idx in range(self._dimension):
+            h = int.from_bytes(hashlib.sha256(seed + struct.pack(">I", idx)).digest()[:4], "big")
+            val = ((h / 0xFFFFFFFF) - 0.5) * 0.1
+            vec[idx] += val
 
-        while len(vec) < self._dimension:
-            block = hashlib.sha256(seed + struct.pack(">I", counter)).digest()
-            # Unpack into 8 floats (32 bytes = 8 x 4-byte standard floats)
-            for k in range(0, 32, 4):
-                if len(vec) >= self._dimension:
-                    break
-                val = struct.unpack(">f", block[k : k + 4])[0]
-                # Replace inf/nan with 0.0 if any
-                if math.isnan(val) or math.isinf(val):
-                    val = 0.0
-                vec.append(val)
-            counter += 1
+        # 2. Token feature hashing (bag-of-words projection)
+        import re
 
-        # L2-normalize vector
+        raw_tokens = re.findall(r"[a-zA-Z0-9_]+", text.lower())
+        tokens: list[str] = []
+        for t in raw_tokens:
+            tokens.append(t)
+            if "_" in t:
+                tokens.extend(part for part in t.split("_") if part)
+
+        for token in tokens:
+            th = int.from_bytes(hashlib.sha256(token.encode("utf-8")).digest()[:8], "big")
+            bucket = th % self._dimension
+            vec[bucket] += 1.0
+
+        # 3. L2-normalize vector
         norm = math.sqrt(sum(x * x for x in vec))
         if norm > 1e-9:
             return [x / norm for x in vec]
