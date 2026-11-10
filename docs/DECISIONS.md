@@ -12,7 +12,7 @@
 | 8 | Public repos / zip upload only in MVP | Avoid private-code privacy + token risk | OAuth phase |
 | 9 | Results labelled by source type | Transparency; static vs predicted vs generated | — |
 | 10 | No execution of repo code during ingestion | Untrusted input | — |
-| 11 | LLM: OpenAI `gpt-4o-mini`, Embeddings: `text-embedding-3-small` (1536-dim) | Cost-effective baseline, reliable structured JSON output, low latency; swappable provider interface | Phase 2 eval harness comparison (P2-07) |
+| 11 | LLM: OpenAI `gpt-4o-mini`, Embeddings: `text-embedding-3-small` (1536-dim), Chunker: Symbol-aware (1500 chars) | Cost-effective baseline, reliable structured JSON output, low latency; validated in P2-07 comparative benchmark (MRR 0.864 vs 0.811 window) | Cost/latency limits at >1M LOC |
 | 12 | Job queue: Arq (asyncio-native Redis queue) | Native `asyncio` integration with FastAPI and asyncpg; avoids thread blocking for I/O tasks | Complex DAG workflows required (e.g. Temporal) |
 | 13 | Auth: Email + Session/JWT (with GitHub OAuth login-only in Phase 1+) | Clean user model for public repo indexing; avoids requesting sensitive private repo scopes | Ingestion of private repositories is required |
 | 14 | Deployment target: Docker multi-container runner (Render / Fly.io / GCP Cloud Run) | Reuses local `docker-compose.yml` multi-container architecture for API, worker, web, postgres, and redis | Enterprise VPC / multi-region scaling required |
