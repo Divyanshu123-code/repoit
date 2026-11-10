@@ -35,3 +35,23 @@ class EmbeddingProvider(ABC):
     async def embed_query(self, text: str) -> list[float]:
         """Embed a single search query."""
         ...
+
+
+class LLMProvider(ABC):
+    """Abstract interface for LLM completions (P2-05, Hard Rule 7)."""
+
+    @property
+    @abstractmethod
+    def model_name(self) -> str:
+        """Name/version of the generative model."""
+        ...
+
+    @abstractmethod
+    async def generate_completion(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float = 0.0,
+        max_tokens: int = 1000,
+    ) -> str:
+        """Generate a completion from chat messages with secret scrubbing."""
+        ...

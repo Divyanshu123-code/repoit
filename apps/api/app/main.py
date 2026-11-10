@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.health import router as health_router
+from app.api.rag import router as rag_router
 from app.api.repos import router as repos_router
 from app.api.search import router as search_router
 from app.core.config import get_settings
@@ -51,6 +52,10 @@ def create_app() -> FastAPI:
     # Semantic search endpoints mounted at root and /api/v1
     application.include_router(search_router)
     application.include_router(search_router, prefix="/api/v1")
+
+    # RAG assistant endpoints mounted at root and /api/v1
+    application.include_router(rag_router)
+    application.include_router(rag_router, prefix="/api/v1")
 
     return application
 

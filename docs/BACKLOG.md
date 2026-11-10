@@ -24,7 +24,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P2-02 EmbeddingProvider interface + 1 implementation + fake for tests.
 - [x] P2-03 pgvector index + semantic search endpoint. AC: returns path + line range + score.
 - [x] P2-04 Retrieval eval harness: 30–50 questions with expected files; report Recall@k, MRR. AC: script outputs a table; baseline stored in `docs/eval/`.
-- [ ] P2-05 RAG assistant with citations + abstention threshold. AC: unanswerable question yields "not enough evidence".
+- [x] P2-05 RAG assistant with citations + abstention threshold. AC: unanswerable question yields "not enough evidence".
 - [ ] P2-06 Chat UI with expandable evidence panel.
 - [ ] P2-07 Compare 2 embedding models / chunk sizes using the eval harness; record decision.
 
