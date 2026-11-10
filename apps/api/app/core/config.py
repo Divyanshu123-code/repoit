@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/repopilot"
     REDIS_URL: str = "redis://localhost:6379/0"
 
+    # Repository ingestion safety limits (P1-02)
+    REPO_MAX_SIZE_BYTES: int = 100 * 1024 * 1024  # 100 MB
+    REPO_FETCH_TIMEOUT_SECONDS: int = 60
+    REPO_TEMP_BASE_DIR: str | None = None
+
 
 @lru_cache
 def get_settings() -> Settings:

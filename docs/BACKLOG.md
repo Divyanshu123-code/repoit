@@ -12,7 +12,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 
 ## Phase 1 — Ingestion & parsing (week 3–4)
 - [x] P1-01 Repo registration (public GitHub URL / zip upload) + `repositories` table. AC: invalid URL rejected with clear error.
-- [ ] P1-02 Safe fetch (shallow clone into temp dir, size/time limits, no execution). AC: >limit repo fails gracefully.
+- [x] P1-02 Safe fetch (shallow clone into temp dir, size/time limits, no execution). AC: >limit repo fails gracefully.
 - [ ] P1-03 File filter (binaries, vendor, generated, secrets patterns, size cap). AC: unit tests with fixture repo.
 - [ ] P1-04 Tree-sitter parsing: symbols, imports, line ranges. AC: fixture repo extracts expected symbol list exactly.
 - [ ] P1-05 Metrics via radon + fan-in/out. AC: values match hand-computed fixtures.
