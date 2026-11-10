@@ -16,6 +16,11 @@ RepoPilot AI connects to a Python repository, indexes it (Tree-sitter), answers 
 8. No new dependency without a one-line justification in the PR/commit message.
 9. Schema changes only via Alembic migrations.
 10. If a requirement is ambiguous, stop and ask; do not guess.
+11. Phase 3 ML Model Training & Evaluation Documentation (Mentor Requirement):
+    When training the different ML models in Phase 3, you MUST create a detailed report in `docs/eval/ml_model_comparison.md` (and track-specific reports). This document must detail:
+    - What each model did and the full training methodology (algorithms evaluated, preprocessing, scaling, feature selection, hyperparameters, cross-validation setup).
+    - Benchmark evaluation results across all models (ROC-AUC, PR-AUC, F1, Precision, Recall, confusion matrices, inference latency).
+    - The champion model selection: which model performed best, why it was chosen for production, and its operational/interpretability trade-offs.
 
 ## Conventions
 - Python 3.12, FastAPI, SQLAlchemy 2.x, Alembic, Pydantic v2. Full type hints; `mypy --strict` on `app/`.
