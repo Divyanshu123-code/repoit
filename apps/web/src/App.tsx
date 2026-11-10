@@ -3,6 +3,7 @@ import { Routes, Route, Link, Navigate } from "react-router-dom";
 import { HealthPage } from "./pages/HealthPage";
 import { RepositoriesPage } from "./pages/RepositoriesPage";
 import { RepoOverviewPage } from "./pages/RepoOverviewPage";
+import { RepoChatPage } from "./pages/RepoChatPage";
 
 export const App: React.FC = () => {
   return (
@@ -66,6 +67,7 @@ export const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<RepositoriesPage />} />
           <Route path="/repositories/:id" element={<RepoOverviewPage />} />
+          <Route path="/repositories/:id/chat" element={<RepoChatPage />} />
           <Route path="/health" element={<HealthPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
