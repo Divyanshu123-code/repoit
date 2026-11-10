@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     REPO_FETCH_TIMEOUT_SECONDS: int = 60
     REPO_TEMP_BASE_DIR: str | None = None
 
+    # AI / Embedding configuration (P2-02)
+    EMBEDDING_PROVIDER: str = "fake"  # 'fake' | 'openai'
+    OPENAI_API_KEY: str | None = None
+    EMBEDDING_MODEL: str = "text-embedding-3-small"
+    EMBEDDING_DIMENSION: int = 1536
+    OPENAI_BASE_URL: str = "https://api.openai.com/v1"
+
 
 @lru_cache
 def get_settings() -> Settings:
