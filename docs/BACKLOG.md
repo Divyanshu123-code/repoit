@@ -17,7 +17,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P1-04 Tree-sitter parsing: symbols, imports, line ranges. AC: fixture repo extracts expected symbol list exactly.
 - [x] P1-05 Metrics via radon + fan-in/out. AC: values match hand-computed fixtures.
 - [x] P1-06 Worker job `scan_repo` with per-stage status + failure handling. AC: killed mid-scan -> status `failed` with reason; re-run works.
-- [ ] P1-07 UI: repo overview (tree, language stats, scan status). AC: shows scan progress live.
+- [x] P1-07 UI: repo overview (tree, language stats, scan status). AC: shows scan progress live.
 
 ## Phase 2 — Semantic search & RAG (week 5–6)
 - [ ] P2-01 Chunker (symbol-based + window fallback). AC: chunks never split a function mid-body when it fits limit.

@@ -215,6 +215,19 @@ async def run_scan_pipeline(
                 "avg_complexity": round(metrics_summary.avg_cyclomatic_complexity, 2),
                 "avg_maintainability_index": round(metrics_summary.avg_maintainability_index, 2),
                 "modules_count": len(metrics_summary.modules),
+                "modules": [
+                    {
+                        "path": m_path,
+                        "loc": m.raw.loc,
+                        "sloc": m.raw.sloc,
+                        "complexity": m.cyclomatic_complexity,
+                        "maintainability_index": round(m.maintainability_index, 1),
+                        "functions_count": len(m.functions),
+                        "fan_in": m.fan_in,
+                        "fan_out": m.fan_out,
+                    }
+                    for m_path, m in metrics_summary.modules.items()
+                ],
             }
             scan.stage_progress = stage_progress
 

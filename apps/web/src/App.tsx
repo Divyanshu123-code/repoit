@@ -1,6 +1,8 @@
 import React from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
 import { HealthPage } from "./pages/HealthPage";
+import { RepositoriesPage } from "./pages/RepositoriesPage";
+import { RepoOverviewPage } from "./pages/RepoOverviewPage";
 
 export const App: React.FC = () => {
   return (
@@ -17,7 +19,9 @@ export const App: React.FC = () => {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "#2563eb" }}>RepoPilot AI</span>
+          <Link to="/" style={{ textDecoration: "none", fontSize: "1.25rem", fontWeight: 700, color: "#2563eb" }}>
+            RepoPilot AI
+          </Link>
           <span
             style={{
               backgroundColor: "#e0f2fe",
@@ -28,10 +32,21 @@ export const App: React.FC = () => {
               borderRadius: "4px",
             }}
           >
-            Phase 0 Shell
+            Phase 1
           </span>
         </div>
         <nav style={{ display: "flex", gap: "1.5rem" }}>
+          <Link
+            to="/"
+            style={{
+              textDecoration: "none",
+              color: "#334155",
+              fontWeight: 500,
+              fontSize: "0.95rem",
+            }}
+          >
+            Repositories
+          </Link>
           <Link
             to="/health"
             style={{
@@ -49,9 +64,10 @@ export const App: React.FC = () => {
       {/* Main Content Area */}
       <main>
         <Routes>
-          <Route path="/" element={<Navigate to="/health" replace />} />
+          <Route path="/" element={<RepositoriesPage />} />
+          <Route path="/repositories/:id" element={<RepoOverviewPage />} />
           <Route path="/health" element={<HealthPage />} />
-          <Route path="*" element={<Navigate to="/health" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
     </div>
