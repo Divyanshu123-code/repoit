@@ -204,7 +204,25 @@ export const RepoOverviewPage: React.FC = () => {
           </p>
         </div>
 
-        <div>
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <Link
+            to={`/repositories/${repository.id}/chat`}
+            style={{
+              backgroundColor: "#ffffff",
+              color: "#2563eb",
+              border: "1px solid #2563eb",
+              padding: "0.65rem 1.25rem",
+              borderRadius: "6px",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.4rem",
+            }}
+          >
+            <span>💬 Ask AI Assistant</span>
+          </Link>
           <button
             onClick={() => scanMutation.mutate()}
             disabled={isScanning || scanMutation.isPending}

@@ -62,6 +62,45 @@ export interface Scan {
   updated_at: string;
 }
 
+export interface RAGCitation {
+  file_path: string;
+  start_line: number;
+  end_line: number;
+  content: string;
+  symbol_name?: string | null;
+  similarity_score: number;
+  source: string;
+}
+
+export interface RAGResponse {
+  question: string;
+  answer: string;
+  abstained: boolean;
+  citations: RAGCitation[];
+  source: string;
+  model_version: string;
+}
+
+export interface SearchResultItem {
+  id: string;
+  path: string;
+  start_line: number;
+  end_line: number;
+  score: number;
+  content: string;
+  symbol_name?: string | null;
+  symbol_type?: string | null;
+  context_header: string;
+  source: string;
+}
+
+export interface SearchResponse {
+  repository_id: string;
+  query: string;
+  count: number;
+  results: SearchResultItem[];
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 export async function fetchHealthz(): Promise<HealthResponse> {
@@ -156,4 +195,36 @@ export async function fetchScans(repoId: string): Promise<Scan[]> {
     throw new Error(`Failed to fetch scans (HTTP ${response.status})`);
   }
   return response.json() as Promise<Scan[]>;
+}
+
+export async function askQuestion(
+  repoId: string,
+  question: string,
+  maxCitations: number = 5
+): Promise<RAGResponse> {
+  const response = await fetch(`${API_BASE_URL}/repositories/${repoId}/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, max_citations: maxCitations }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Question query failed (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<RAGResponse>;
+}
+
+export async function searchCode(
+  repoId: string,
+  query: string,
+  limit: number = 10
+): Promise<SearchResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/repositories/${repoId}/search?q=${encodeURIComponent(query)}&limit=${limit}`
+  );
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Search failed (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<SearchResponse>;
 }
