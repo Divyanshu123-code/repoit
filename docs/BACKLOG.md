@@ -22,7 +22,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 ## Phase 2 — Semantic search & RAG (week 5–6)
 - [x] P2-01 Chunker (symbol-based + window fallback). AC: chunks never split a function mid-body when it fits limit.
 - [x] P2-02 EmbeddingProvider interface + 1 implementation + fake for tests.
-- [ ] P2-03 pgvector index + semantic search endpoint. AC: returns path + line range + score.
+- [x] P2-03 pgvector index + semantic search endpoint. AC: returns path + line range + score.
 - [ ] P2-04 Retrieval eval harness: 30–50 questions with expected files; report Recall@k, MRR. AC: script outputs a table; baseline stored in `docs/eval/`.
 - [ ] P2-05 RAG assistant with citations + abstention threshold. AC: unanswerable question yields "not enough evidence".
 - [ ] P2-06 Chat UI with expandable evidence panel.

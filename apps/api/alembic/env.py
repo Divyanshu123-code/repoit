@@ -9,7 +9,8 @@ from alembic import context
 from app.auth.models import User  # noqa: F401
 from app.core.config import get_settings
 from app.core.db import Base
-from app.repos.models import Repository  # noqa: F401
+from app.indexing.models import CodeChunkRecord  # noqa: F401
+from app.repos.models import Repository, RepositoryScan  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
