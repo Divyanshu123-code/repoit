@@ -20,7 +20,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P1-07 UI: repo overview (tree, language stats, scan status). AC: shows scan progress live.
 
 ## Phase 2 — Semantic search & RAG (week 5–6)
-- [ ] P2-01 Chunker (symbol-based + window fallback). AC: chunks never split a function mid-body when it fits limit.
+- [x] P2-01 Chunker (symbol-based + window fallback). AC: chunks never split a function mid-body when it fits limit.
 - [ ] P2-02 EmbeddingProvider interface + 1 implementation + fake for tests.
 - [ ] P2-03 pgvector index + semantic search endpoint. AC: returns path + line range + score.
 - [ ] P2-04 Retrieval eval harness: 30–50 questions with expected files; report Recall@k, MRR. AC: script outputs a table; baseline stored in `docs/eval/`.
