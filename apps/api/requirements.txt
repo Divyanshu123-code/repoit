@@ -30,8 +30,9 @@ Pygments==2.21.0
 pytest==9.2.0
 pytest-asyncio==1.4.1.post1
 python-dotenv==1.2.4
+python-multipart==0.0.33
 PyYAML==6.0.3
--e git+https://github.com/Divyanshu123-code/repoit.git@461764374fb9a002841db33ff259c040146b543e#egg=repopilot_api&subdirectory=apps/api
+-e git+https://github.com/Divyanshu123-code/repoit.git@b99b4c51187cf77ae199c42ccd08ec488f93828b#egg=repopilot_api&subdirectory=apps/api
 ruff==0.17.3
 SQLAlchemy==2.1.6
 starlette==1.10.0

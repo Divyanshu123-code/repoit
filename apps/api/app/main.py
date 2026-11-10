@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.api.health import router as health_router
+from app.api.repos import router as repos_router
 from app.core.config import get_settings
 from app.core.db import close_database
 from app.core.logging import setup_logging
@@ -41,6 +42,10 @@ def create_app() -> FastAPI:
 
     # Health probes mounted at root
     application.include_router(health_router)
+
+    # Repository endpoints mounted at root and /api/v1
+    application.include_router(repos_router)
+    application.include_router(repos_router, prefix="/api/v1")
 
     return application
 
