@@ -299,7 +299,7 @@ async def safe_fetch_repository(
                 max_size_bytes=max_size_bytes,
                 branch=branch,
             )
-        elif source_type == "zip":
+        elif source_type in ("zip", "upload"):
             if not zip_bytes:
                 raise RepoFetchError("ZIP bytes must be provided for zip repository fetch.")
             size_bytes, file_count = safe_extract_zip(

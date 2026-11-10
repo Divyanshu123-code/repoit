@@ -18,6 +18,12 @@ from app.repos.filter import (
     RepoFileFilter,
     RepoFilterSummary,
 )
+from app.repos.models import Repository, RepositoryScan
+from app.repos.scan_service import (
+    get_latest_scan_for_repo,
+    list_scans_for_repo,
+    run_scan_pipeline,
+)
 
 __all__ = [
     "FetchedRepo",
@@ -30,7 +36,12 @@ __all__ = [
     "RepoFileFilter",
     "RepoFilterSummary",
     "RepoSizeLimitExceededError",
+    "Repository",
+    "RepositoryScan",
     "calculate_directory_size",
+    "get_latest_scan_for_repo",
+    "list_scans_for_repo",
+    "run_scan_pipeline",
     "safe_clone_github_repo",
     "safe_extract_zip",
     "safe_fetch_repository",

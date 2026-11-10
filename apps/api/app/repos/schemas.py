@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -29,6 +30,27 @@ class RepoResponse(BaseModel):
     status: str
     indexed_at: datetime | None = None
     created_at: datetime
+
+
+class ScanResponse(BaseModel):
+    """Repository scan status and results schema."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    repository_id: uuid.UUID
+    status: str
+    current_stage: str
+    stage_progress: dict[str, Any] | None = None
+    error_message: str | None = None
+    file_count: int
+    total_lines: int
+    total_symbols: int
+    metrics_summary: dict[str, Any] | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
 
 
 class ErrorDetail(BaseModel):

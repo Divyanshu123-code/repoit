@@ -8,7 +8,17 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db_session
-from app.repos.schemas import ErrorResponse, RepoRegisterRequest, RepoResponse
+from app.repos.scan_service import (
+    get_latest_scan_for_repo,
+    list_scans_for_repo,
+    run_scan_pipeline,
+)
+from app.repos.schemas import (
+    ErrorResponse,
+    RepoRegisterRequest,
+    RepoResponse,
+    ScanResponse,
+)
 from app.repos.service import (
     InvalidRepoURLError,
     InvalidUploadError,
@@ -120,3 +130,84 @@ async def get_repository(
             },
         )
     return RepoResponse.model_validate(repo)
+
+
+@router.post(
+    "/{repo_id}/scan",
+    response_model=ScanResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={
+        404: {"model": ErrorResponse, "description": "Repository not found."},
+    },
+)
+async def trigger_scan(
+    repo_id: uuid.UUID,
+    session: DatabaseSession = None,  # type: ignore[assignment]
+) -> ScanResponse:
+    """Trigger or re-run a background scan for the repository."""
+    repo = await get_repository_by_id(session, str(repo_id))
+    if not repo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": {
+                    "code": "REPOSITORY_NOT_FOUND",
+                    "message": f"Repository '{repo_id}' not found.",
+                }
+            },
+        )
+    scan = await run_scan_pipeline(session, repo_id)
+    return ScanResponse.model_validate(scan)
+
+
+@router.get(
+    "/{repo_id}/scan",
+    response_model=ScanResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Scan or repository not found."},
+    },
+)
+async def get_latest_scan(
+    repo_id: uuid.UUID,
+    session: DatabaseSession = None,  # type: ignore[assignment]
+) -> ScanResponse:
+    """Retrieve the latest scan execution for the repository."""
+    scan = await get_latest_scan_for_repo(session, repo_id)
+    if not scan:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": {
+                    "code": "SCAN_NOT_FOUND",
+                    "message": f"No scan found for repository '{repo_id}'.",
+                }
+            },
+        )
+    return ScanResponse.model_validate(scan)
+
+
+@router.get(
+    "/{repo_id}/scans",
+    response_model=list[ScanResponse],
+    responses={
+        404: {"model": ErrorResponse, "description": "Repository not found."},
+    },
+)
+async def get_all_scans(
+    repo_id: uuid.UUID,
+    session: DatabaseSession = None,  # type: ignore[assignment]
+) -> list[ScanResponse]:
+    """Retrieve all historical scan executions for the repository."""
+    repo = await get_repository_by_id(session, str(repo_id))
+    if not repo:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": {
+                    "code": "REPOSITORY_NOT_FOUND",
+                    "message": f"Repository '{repo_id}' not found.",
+                }
+            },
+        )
+    scans = await list_scans_for_repo(session, repo_id)
+    return [ScanResponse.model_validate(s) for s in scans]
