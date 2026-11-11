@@ -132,3 +132,20 @@ Because software defect prediction is characterized by severe class imbalance, a
 - **Random Forest**: Excels in probability calibration and variance reduction across cross-validation folds. Extremely stable with fast training and low risk of overfitting.
 - **XGBoost**: Delivers peak PR-AUC on dense datasets (KC1) by focusing gradient steps on challenging boundary cases. Feature importance and TreeSHAP explainability allow instantaneous risk attribution.
 - **Inference Speed**: Both ensemble models demonstrate sub-millisecond inference times per function (< 0.25 ms), making them well-suited for live repository scan pipelines in RepoPilot AI.
+
+---
+
+## 5. Held-Out Test Evaluation & SHAP Feature Attribution (P3-03)
+
+As required by the mentor evaluation protocol, the champion models were locked and tested on an independent 20% held-out test set completely untouched during cross-validation:
+
+| Dataset | Champion Model | Held-Out Test ROC-AUC | Held-Out Test PR-AUC | Test Recall | Test Precision | Test Brier Score |
+|---|---|---|---|---|---|---|
+| **KC1 (Ground System)** | `Random Forest` | **0.820** | **0.486** | **0.769** (50 / 65 defects) | 0.350 | 0.152 |
+| **CM1 (Spacecraft)** | `Logistic Regression` | **0.659** | **0.204** | **0.500** (5 / 10 defects) | 0.192 | 0.198 |
+
+### Top SHAP Feature Attribution Insights
+1. **Leading Risk Drivers**: Halstead total operators (`n`, `total_Op`), operand count (`total_Opnd`), and lines of executable code (`lOCode`) provide the strongest global SHAP importance values.
+2. **Failure Mode Insights (False Negatives)**: Defective functions that evaded detection had a median LOC of 8.0 and median CC of 1.0 (subtle logic or pointer bugs not identifiable via structural metrics alone).
+3. **Operational Threshold Tuning**: At decision threshold $\tau = 0.60$, precision increases to 47.0% (F1: 0.527); at $\tau = 0.80$, precision reaches 68.4% for low-noise continuous integration gates.
+4. **Full Track A Dossier**: See [`docs/eval/ml_trackA.md`](ml_trackA.md) for the complete held-out test analysis and threshold tuning curves.

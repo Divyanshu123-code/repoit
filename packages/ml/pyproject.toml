@@ -14,6 +14,7 @@ dependencies = [
     "numpy>=1.26.0",
     "joblib>=1.3.0",
     "xgboost>=2.0.0",
+    "shap>=0.45.0",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -30,6 +31,6 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
-module = ["pandas.*", "sklearn.*", "scipy.*", "xgboost.*"]
+module = ["pandas.*", "sklearn.*", "scipy.*", "xgboost.*", "shap.*"]
 ignore_missing_imports = true
 

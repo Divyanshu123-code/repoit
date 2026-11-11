@@ -7,6 +7,12 @@ from packages.ml.dataset import (
     load_dataset,
     load_kc1,
 )
+from packages.ml.error_analysis import (
+    CohortFeatureProfile,
+    ErrorAnalysisReport,
+    ThresholdMetricPoint,
+    perform_error_analysis,
+)
 from packages.ml.evaluator import (
     BenchmarkSuiteResult,
     ConfusionMatrixCounts,
@@ -14,6 +20,11 @@ from packages.ml.evaluator import (
     ModelCVResult,
     evaluate_model_cv,
     run_benchmark_suite,
+)
+from packages.ml.explainability import (
+    ShapExplanationResult,
+    ShapFeatureImportance,
+    compute_shap_explanations,
 )
 from packages.ml.inspector import DatasetInspectionReport, inspect_dataset
 from packages.ml.models import (
@@ -28,15 +39,22 @@ __all__ = [
     "SUPPORTED_MODELS",
     "TARGET_COLUMN",
     "BenchmarkSuiteResult",
+    "CohortFeatureProfile",
     "ConfusionMatrixCounts",
     "DatasetInspectionReport",
+    "ErrorAnalysisReport",
     "FoldMetrics",
     "ModelCVResult",
+    "ShapExplanationResult",
+    "ShapFeatureImportance",
+    "ThresholdMetricPoint",
     "build_model_pipeline",
+    "compute_shap_explanations",
     "evaluate_model_cv",
     "inspect_dataset",
     "load_cm1",
     "load_dataset",
     "load_kc1",
+    "perform_error_analysis",
     "run_benchmark_suite",
 ]
