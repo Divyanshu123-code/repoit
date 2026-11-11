@@ -44,6 +44,7 @@ jobs:
         run: |
           pip install -r apps/api/requirements.txt
           pip install -r apps/worker/requirements.txt
+          pip install -r packages/ml/requirements.txt
           pip install "mypy>=1.9.0"
 
       - name: Run Mypy Strict on API app/
@@ -54,6 +55,10 @@ jobs:
       - name: Run Mypy Strict on Worker
         run: |
           mypy --strict apps/worker/worker
+
+      - name: Run Mypy Strict on ML package
+        run: |
+          mypy --config-file packages/ml/pyproject.toml packages/ml
 
   test:
     name: Automated Tests (Pytest)
@@ -71,6 +76,7 @@ jobs:
         run: |
           pip install -r apps/api/requirements.txt
           pip install -r apps/worker/requirements.txt
+          pip install -r packages/ml/requirements.txt
           pip install "pytest>=8.0.0" "pytest-asyncio>=0.23.0" "httpx>=0.27.0" "pyyaml"
 
       - name: Run Repository Tests

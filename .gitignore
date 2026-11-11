@@ -65,7 +65,8 @@ coverage/
 *.db
 
 # Model artifacts
-/packages/ml/data/
+/packages/ml/data/*
+!/packages/ml/data/*.csv
 /packages/ml/artifacts/
 *.joblib
 *.pkl

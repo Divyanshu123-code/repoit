@@ -29,7 +29,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P2-07 Compare 2 embedding models / chunk sizes using the eval harness; record decision.
 
 ## Phase 3 — ML defect prediction (week 7–8)
-- [ ] P3-01 Dataset notebook/script: inspect CM1/KC1 (docs, license, labels, imbalance, duplicates).
+- [x] P3-01 Dataset notebook/script: inspect CM1/KC1 (docs, license, labels, imbalance, duplicates).
 - [ ] P3-02 Leakage-safe sklearn Pipeline + 5 models + CV. AC: results table for all models.
 - [ ] P3-03 Final test evaluation + SHAP + error analysis report (`docs/eval/ml_trackA.md` and `docs/eval/ml_model_comparison.md` detailing: (a) what each model did and how it was trained, (b) results across models, and (c) which model was best and why).
 - [ ] P3-04 Artifact export + `model_card.json` (dataset, version, metrics, limitations).
