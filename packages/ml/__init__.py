@@ -26,6 +26,13 @@ from packages.ml.explainability import (
     ShapFeatureImportance,
     compute_shap_explanations,
 )
+from packages.ml.export import (
+    DEFAULT_ARTIFACTS_DIR,
+    ModelCard,
+    export_champion_artifact,
+    load_model_artifact,
+    predict_defect_risk,
+)
 from packages.ml.inspector import DatasetInspectionReport, inspect_dataset
 from packages.ml.models import (
     MODEL_METADATA,
@@ -34,6 +41,7 @@ from packages.ml.models import (
 )
 
 __all__ = [
+    "DEFAULT_ARTIFACTS_DIR",
     "FEATURE_NAMES",
     "MODEL_METADATA",
     "SUPPORTED_MODELS",
@@ -45,16 +53,20 @@ __all__ = [
     "ErrorAnalysisReport",
     "FoldMetrics",
     "ModelCVResult",
+    "ModelCard",
     "ShapExplanationResult",
     "ShapFeatureImportance",
     "ThresholdMetricPoint",
     "build_model_pipeline",
     "compute_shap_explanations",
     "evaluate_model_cv",
+    "export_champion_artifact",
     "inspect_dataset",
     "load_cm1",
     "load_dataset",
     "load_kc1",
+    "load_model_artifact",
     "perform_error_analysis",
+    "predict_defect_risk",
     "run_benchmark_suite",
 ]

@@ -32,7 +32,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P3-01 Dataset notebook/script: inspect CM1/KC1 (docs, license, labels, imbalance, duplicates).
 - [x] P3-02 Leakage-safe sklearn Pipeline + 5 models + CV. AC: results table for all models.
 - [x] P3-03 Final test evaluation + SHAP + error analysis report (`docs/eval/ml_trackA.md` and `docs/eval/ml_model_comparison.md` detailing: (a) what each model did and how it was trained, (b) results across models, and (c) which model was best and why).
-- [ ] P3-04 Artifact export + `model_card.json` (dataset, version, metrics, limitations).
+- [x] P3-04 Artifact export + `model_card.json` (dataset, version, metrics, limitations).
 - [ ] P3-05 Track B: mine Python repos (PyDriller), SZZ labelling, radon features; document labelling noise. AC: dataset v1 + datasheet.
 - [ ] P3-06 Track B training with project-wise split; compare vs Track A.
 - [ ] P3-07 Inference service + `ml_predictions` storage + risk UI with model version + limitations text.
