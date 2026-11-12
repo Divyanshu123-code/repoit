@@ -234,6 +234,24 @@ async def run_scan_pipeline(
             repo.status = "ready"
             repo.indexed_at = now
 
+            # STAGE 5b: ML Defect Risk Inference (P3-07)
+            try:
+                from app.ml.inference_service import get_inference_service
+
+                ml_service = get_inference_service()
+                await ml_service.predict_and_store_for_modules(
+                    session=session,
+                    repository_id=repo_id,
+                    modules_code=parsed_modules_code,
+                    scan_id=scan.id,
+                )
+            except Exception as ml_err:  # noqa: BLE001
+                logger.warning(
+                    "ML defect risk inference during scan skipped for repo %s: %s",
+                    repo_id,
+                    ml_err,
+                )
+
             await session.commit()
             await session.refresh(scan)
             logger.info("Scan completed successfully for repo %s (scan_id=%s)", repo_id, scan.id)

@@ -35,7 +35,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P3-04 Artifact export + `model_card.json` (dataset, version, metrics, limitations).
 - [x] P3-05 Track B: mine Python repos (PyDriller), SZZ labelling, radon features; document labelling noise. AC: dataset v1 + datasheet.
 - [x] P3-06 Track B training with project-wise split; compare vs Track A.
-- [ ] P3-07 Inference service + `ml_predictions` storage + risk UI with model version + limitations text.
+- [x] P3-07 Inference service + `ml_predictions` storage + risk UI with model version + limitations text.
 
 ## Phase 4 — Static analysis & graph (week 9)
 - [ ] P4-01 Ruff runner + normalised finding schema. AC: findings stored with rule, severity, line.

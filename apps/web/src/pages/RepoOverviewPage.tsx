@@ -206,6 +206,24 @@ export const RepoOverviewPage: React.FC = () => {
 
         <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
           <Link
+            to={`/repositories/${repository.id}/defect-risk`}
+            style={{
+              backgroundColor: "#fef3c7",
+              color: "#92400e",
+              border: "1px solid #f59e0b",
+              padding: "0.65rem 1.25rem",
+              borderRadius: "6px",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              textDecoration: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.4rem",
+            }}
+          >
+            <span>🎯 Defect Risk</span>
+          </Link>
+          <Link
             to={`/repositories/${repository.id}/chat`}
             style={{
               backgroundColor: "#ffffff",

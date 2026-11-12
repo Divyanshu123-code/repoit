@@ -49,7 +49,7 @@ warn_return_any = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["radon.*"]
+module = ["radon.*", "joblib.*", "packages.*"]
 ignore_missing_imports = true
 
 [tool.ruff]

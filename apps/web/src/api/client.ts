@@ -228,3 +228,67 @@ export async function searchCode(
   }
   return response.json() as Promise<SearchResponse>;
 }
+
+export interface TopFeature {
+  feature: string;
+  value: number;
+  description: string;
+}
+
+export interface MLPredictionItem {
+  id: string;
+  file_path: string;
+  function_name: string | null;
+  line_start: number | null;
+  line_end: number | null;
+  risk_probability: number;
+  risk_band: "low" | "medium" | "high";
+  model_version: string;
+  top_features: TopFeature[];
+  source: "ml_predicted";
+  created_at: string;
+}
+
+export interface DefectRiskSummary {
+  total_modules: number;
+  high_risk_count: number;
+  medium_risk_count: number;
+  low_risk_count: number;
+  average_risk_probability: number;
+}
+
+export interface DefectRiskResponse {
+  repository_id: string;
+  model_version: string;
+  disclaimer: string;
+  source: "ml_predicted";
+  summary: DefectRiskSummary;
+  predictions: MLPredictionItem[];
+}
+
+export async function fetchDefectRisk(
+  repoId: string,
+  riskBand?: "low" | "medium" | "high"
+): Promise<DefectRiskResponse> {
+  const query = riskBand ? `?risk_band=${riskBand}` : "";
+  const response = await fetch(`${API_BASE_URL}/repositories/${repoId}/defect-risk${query}`);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to fetch defect risk (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<DefectRiskResponse>;
+}
+
+export async function triggerDefectRiskPrediction(
+  repoId: string
+): Promise<DefectRiskResponse> {
+  const response = await fetch(`${API_BASE_URL}/repositories/${repoId}/defect-risk/predict`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Prediction failed (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<DefectRiskResponse>;
+}
