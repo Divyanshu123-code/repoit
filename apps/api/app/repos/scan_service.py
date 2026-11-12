@@ -156,6 +156,7 @@ async def run_scan_pipeline(
             parser = TreeSitterPythonParser()
             parsed_modules_code: dict[str, str] = {}
             parsed_modules_imports: dict[str, list[str]] = {}
+            parsed_ast_imports: dict[str, list[Any]] = {}
             total_symbols_count = 0
             total_lines_count = 0
 
@@ -169,6 +170,7 @@ async def run_scan_pipeline(
                 parsed = parser.parse_source(code_str, file_path=rel_file)
                 parsed_modules_code[rel_file.as_posix()] = code_str
                 parsed_modules_imports[rel_file.as_posix()] = [imp.module for imp in parsed.imports]
+                parsed_ast_imports[rel_file.as_posix()] = parsed.imports
                 total_symbols_count += len(parsed.symbols)
                 total_lines_count += parsed.total_lines
 
@@ -268,6 +270,25 @@ async def run_scan_pipeline(
                     "Static analysis during scan skipped for repo %s: %s",
                     repo_id,
                     static_err,
+                )
+
+            # STAGE 5d: Import Graph Building via NetworkX (P4-02)
+            try:
+                from app.graph.service import get_graph_service
+
+                graph_service = get_graph_service()
+                await graph_service.build_and_store_graph(
+                    session=session,
+                    repository_id=repo_id,
+                    modules_imports=parsed_ast_imports,
+                    known_files=set(parsed_modules_code.keys()),
+                    scan_id=scan.id,
+                )
+            except Exception as graph_err:  # noqa: BLE001
+                logger.warning(
+                    "Import graph building during scan skipped for repo %s: %s",
+                    repo_id,
+                    graph_err,
                 )
 
             await session.commit()

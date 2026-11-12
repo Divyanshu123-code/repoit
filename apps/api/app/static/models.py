@@ -103,6 +103,11 @@ class StaticFinding(Base):
         default=lambda: datetime.now(UTC),
     )
 
+    def __init__(self, **kwargs: Any) -> None:
+        if "source" not in kwargs:
+            kwargs["source"] = "static"
+        super().__init__(**kwargs)
+
     def to_dict(self) -> dict[str, Any]:
         """Convert static finding entity to dictionary representation."""
         return {

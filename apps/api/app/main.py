@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.graph import router as graph_router
 from app.api.health import router as health_router
 from app.api.ml import router as ml_router
 from app.api.rag import router as rag_router
@@ -66,6 +67,10 @@ def create_app() -> FastAPI:
     # Static analysis findings endpoints mounted at root and /api/v1
     application.include_router(static_router)
     application.include_router(static_router, prefix="/api/v1")
+
+    # Import dependency graph endpoints mounted at root and /api/v1
+    application.include_router(graph_router)
+    application.include_router(graph_router, prefix="/api/v1")
 
     return application
 

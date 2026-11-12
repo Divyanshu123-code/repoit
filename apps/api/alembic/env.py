@@ -9,6 +9,7 @@ from alembic import context
 from app.auth.models import User  # noqa: F401
 from app.core.config import get_settings
 from app.core.db import Base
+from app.graph.models import DependencyEdge  # noqa: F401
 from app.indexing.models import CodeChunkRecord  # noqa: F401
 from app.ml.models import MLPrediction  # noqa: F401
 from app.repos.models import Repository, RepositoryScan  # noqa: F401
