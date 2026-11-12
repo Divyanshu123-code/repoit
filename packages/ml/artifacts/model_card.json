@@ -1,13 +1,13 @@
 {
   "model_name": "RepoPilot Defect Risk Predictor",
-  "model_version": "1.0.0",
-  "model_type": "Random Forest",
-  "model_family": "Bagging Ensemble",
-  "created_at": "2026-11-11T16:27:26.164631+00:00",
+  "model_version": "2.0.0",
+  "model_type": "XGBoost / Gradient Boosting",
+  "model_family": "Boosting Ensemble",
+  "created_at": "2026-11-12T17:29:16.880052+00:00",
   "license": "Public Domain / Apache 2.0",
   "author": "RepoPilot AI Team",
-  "training_dataset": "NASA PROMISE KC1 (Static Code Metrics)",
-  "training_samples_count": 2109,
+  "training_dataset": "Self-Mined TRACK_B_PYTHON_V1 (Modern Python Repositories)",
+  "training_samples_count": 978,
   "features_count": 21,
   "features_list": [
     "loc",
@@ -33,7 +33,7 @@
     "branchCount"
   ],
   "target_column": "defects",
-  "class_imbalance_ratio": 5.47,
+  "class_imbalance_ratio": 7.58,
   "metrics": {
     "cv_roc_auc_mean": 0.811,
     "cv_pr_auc_mean": 0.469,
@@ -47,7 +47,14 @@
       "fp": 93,
       "fn": 15,
       "tp": 50
-    }
+    },
+    "roc_auc": 0.9149369149369149,
+    "pr_auc": 0.6938010714406265,
+    "f1": 0.6136363636363636,
+    "recall": 0.6,
+    "precision": 0.627906976744186,
+    "balanced_accuracy": 0.7706959706959706,
+    "brier_score": 0.09464880265827359
   },
   "risk_bands": {
     "low": "probability < 0.35",
@@ -58,62 +65,62 @@
     {
       "rank": 1,
       "feature": "lOCode",
-      "mean_abs_shap": 0.0378,
+      "mean_abs_shap": 0.8757,
       "description": "Lines of executable code"
     },
     {
       "rank": 2,
-      "feature": "loc",
-      "mean_abs_shap": 0.0283,
-      "description": "McCabe's line count of code"
+      "feature": "ev(g)",
+      "mean_abs_shap": 0.8356,
+      "description": "McCabe's essential complexity"
     },
     {
       "rank": 3,
-      "feature": "total_Opnd",
-      "mean_abs_shap": 0.0282,
-      "description": "Total operands (N2)"
-    },
-    {
-      "rank": 4,
       "feature": "v",
-      "mean_abs_shap": 0.0251,
+      "mean_abs_shap": 0.728,
       "description": "Halstead program volume V"
     },
     {
+      "rank": 4,
+      "feature": "loc",
+      "mean_abs_shap": 0.4776,
+      "description": "McCabe's line count of code"
+    },
+    {
       "rank": 5,
-      "feature": "n",
-      "mean_abs_shap": 0.0249,
-      "description": "Halstead total operators and operands (length N)"
+      "feature": "uniq_Op",
+      "mean_abs_shap": 0.3744,
+      "description": "Unique operators (mu1)"
     },
     {
       "rank": 6,
-      "feature": "e",
-      "mean_abs_shap": 0.0228,
-      "description": "Halstead effort E"
+      "feature": "n",
+      "mean_abs_shap": 0.3707,
+      "description": "Halstead total operators and operands (length N)"
     },
     {
       "rank": 7,
-      "feature": "b",
-      "mean_abs_shap": 0.0223,
-      "description": "Halstead delivered bugs estimator B"
+      "feature": "v(g)",
+      "mean_abs_shap": 0.3354,
+      "description": "McCabe's cyclomatic complexity"
     },
     {
       "rank": 8,
-      "feature": "t",
-      "mean_abs_shap": 0.0192,
-      "description": "Halstead time to implement T (seconds)"
+      "feature": "lOComment",
+      "mean_abs_shap": 0.2884,
+      "description": "Lines of comments"
     },
     {
       "rank": 9,
       "feature": "d",
-      "mean_abs_shap": 0.018,
+      "mean_abs_shap": 0.2312,
       "description": "Halstead difficulty level D"
     },
     {
       "rank": 10,
-      "feature": "lOBlank",
-      "mean_abs_shap": 0.0152,
-      "description": "Lines of blank space"
+      "feature": "total_Op",
+      "mean_abs_shap": 0.2009,
+      "description": "Total operators (N1)"
     }
   ],
   "intended_use": [

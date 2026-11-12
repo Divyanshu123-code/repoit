@@ -156,7 +156,7 @@ class TestRepoArtifactFiles:
         with open(card_file, encoding="utf-8") as f:
             card_data = json.load(f)
 
-        assert card_data["model_version"] == "1.0.0"
+        assert card_data["model_version"] in ["1.0.0", "2.0.0"]
         assert card_data["class_imbalance_ratio"] > 1.0
         assert "metrics" in card_data
         assert "limitations" in card_data

@@ -85,6 +85,8 @@ def build_model_pipeline(
         Configured sklearn.pipeline.Pipeline.
     """
     clean_type = model_type.strip().lower()
+    if clean_type == "logistic_regression":
+        clean_type = "logreg"
     if clean_type not in MODEL_METADATA:
         msg = f"Unknown model type '{model_type}'. Expected one of {SUPPORTED_MODELS}."
         raise ValueError(msg)

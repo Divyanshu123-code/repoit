@@ -144,7 +144,11 @@ def export_champion_artifact(
         created_at=datetime.now(UTC).isoformat(),
         license="Public Domain / Apache 2.0",
         author="RepoPilot AI Team",
-        training_dataset=f"NASA PROMISE {dataset_name.upper()} (Static Code Metrics)",
+        training_dataset=(
+            f"Self-Mined {dataset_name.upper()} (Modern Python Repositories)"
+            if "track_b" in dataset_name.lower() or "python" in dataset_name.lower()
+            else f"NASA PROMISE {dataset_name.upper()} (Static Code Metrics)"
+        ),
         training_samples_count=len(df),
         features_count=len(features),
         features_list=features,
