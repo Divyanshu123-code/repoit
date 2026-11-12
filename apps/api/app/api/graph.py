@@ -8,7 +8,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db_session
-from app.graph.schemas import GraphResponse, RebuildGraphRequest
+from app.graph.schemas import (
+    GraphResponse,
+    ImpactRequest,
+    ImpactResponse,
+    RebuildGraphRequest,
+)
 from app.graph.service import DependencyGraphService, get_graph_service
 from app.parsing import TreeSitterPythonParser
 from app.parsing.models import ImportStatement
@@ -125,4 +130,68 @@ async def rebuild_repository_graph_endpoint(
         session=session,
         repository_id=repository_id,
         internal_only=not (request and request.include_external),
+    )
+
+
+@router.post(
+    "/impact",
+    response_model=ImpactResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Analyze change impact blast radius (reverse reachability)",
+    description=(
+        "Computes reverse reachability up to max_depth from changed files in the import dependency graph. "
+        "Complies with Hard Rule 5: source labelled strictly as 'graph_derived'."
+    ),
+)
+async def analyze_impact_endpoint(
+    repository_id: uuid.UUID,
+    request: ImpactRequest,
+    session: DatabaseSession = None,  # type: ignore[assignment]
+    graph_service: GraphServiceDep = None,  # type: ignore[assignment]
+) -> ImpactResponse:
+    """Analyze change impact blast radius for a list of modified files."""
+    repo = await session.get(Repository, repository_id)
+    if repo is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Repository with id '{repository_id}' not found",
+        )
+
+    return await graph_service.compute_impact(
+        session=session,
+        repository_id=repository_id,
+        changed_files=request.changed_files,
+        max_depth=request.max_depth,
+        include_changed=request.include_changed,
+    )
+
+
+@router.get(
+    "/impact",
+    response_model=ImpactResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Query change impact for a single file",
+)
+async def query_impact_endpoint(
+    repository_id: uuid.UUID,
+    file: Annotated[str, Query(description="Single modified file path to analyze")],
+    max_depth: Annotated[int, Query(ge=1, le=20, description="Max depth limit")] = 3,
+    include_changed: Annotated[bool, Query(description="Include modified file itself")] = False,
+    session: DatabaseSession = None,  # type: ignore[assignment]
+    graph_service: GraphServiceDep = None,  # type: ignore[assignment]
+) -> ImpactResponse:
+    """Convenience GET endpoint to evaluate change impact for a single file."""
+    repo = await session.get(Repository, repository_id)
+    if repo is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Repository with id '{repository_id}' not found",
+        )
+
+    return await graph_service.compute_impact(
+        session=session,
+        repository_id=repository_id,
+        changed_files=[file],
+        max_depth=max_depth,
+        include_changed=include_changed,
     )

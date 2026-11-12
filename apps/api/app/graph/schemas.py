@@ -62,3 +62,70 @@ class RebuildGraphRequest(BaseModel):
     """Request payload to trigger import graph recalculation."""
 
     include_external: bool = False
+
+
+class ImpactRequest(BaseModel):
+    """Request payload for change impact analysis (P4-03)."""
+
+    changed_files: list[str] = Field(
+        ...,
+        min_length=1,
+        description="List of modified or proposed file paths to analyze",
+        examples=[["app/core/db.py"]],
+    )
+    max_depth: int = Field(
+        default=3,
+        ge=1,
+        le=20,
+        description="Maximum depth of reverse reachability traversal",
+    )
+    include_changed: bool = Field(
+        default=False,
+        description="Whether to include the seed changed files themselves in the affected list (at depth 0)",
+    )
+
+
+class AffectedFileItem(BaseModel):
+    """Details of a single file affected by change propagation.
+
+    Enforces Hard Rule 5: source labelled strictly as 'graph_derived'.
+    """
+
+    file_path: str
+    depth: int = Field(ge=0, description="Shortest distance from any changed file")
+    impact_tier: Literal["changed", "direct", "transitive"]
+    seed_file: str = Field(description="The changed file that triggered this impact")
+    dependency_chain: list[str] = Field(
+        default_factory=list,
+        description="Shortest path from changed seed file to this affected file [seed, ..., affected]",
+    )
+    direct_imported_module: str | None = Field(
+        default=None,
+        description="The immediate dependency in the chain imported by this file",
+    )
+    in_degree: int = 0
+    out_degree: int = 0
+    source: Literal["graph_derived"] = "graph_derived"
+
+
+class ImpactResponse(BaseModel):
+    """Full API response for change impact blast radius analysis.
+
+    Enforces Hard Rule 5: source labelled strictly as 'graph_derived'.
+    """
+
+    repository_id: str
+    changed_files: list[str]
+    max_depth: int
+    include_changed: bool = False
+    total_affected_count: int
+    direct_affected_count: int
+    transitive_affected_count: int
+    total_repo_files: int
+    impact_ratio: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Fraction of repo files impacted by this change set (0.0 to 1.0)",
+    )
+    affected_files: list[AffectedFileItem] = Field(default_factory=list)
+    source: Literal["graph_derived"] = "graph_derived"
