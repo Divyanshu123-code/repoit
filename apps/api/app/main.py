@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api.debug import router as debug_router
 from app.api.graph import router as graph_router
 from app.api.health import router as health_router
 from app.api.ml import router as ml_router
@@ -71,6 +72,10 @@ def create_app() -> FastAPI:
     # Import dependency graph endpoints mounted at root and /api/v1
     application.include_router(graph_router)
     application.include_router(graph_router, prefix="/api/v1")
+
+    # AI debug assistant endpoints mounted at root and /api/v1
+    application.include_router(debug_router)
+    application.include_router(debug_router, prefix="/api/v1")
 
     return application
 
