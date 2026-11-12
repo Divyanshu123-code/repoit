@@ -5,6 +5,7 @@ import { RepositoriesPage } from "./pages/RepositoriesPage";
 import { RepoOverviewPage } from "./pages/RepoOverviewPage";
 import { RepoChatPage } from "./pages/RepoChatPage";
 import { DefectRiskPage } from "./pages/DefectRiskPage";
+import { GraphAnalysisPage } from "./pages/GraphAnalysisPage";
 
 export const App: React.FC = () => {
   return (
@@ -70,6 +71,7 @@ export const App: React.FC = () => {
           <Route path="/repositories/:id" element={<RepoOverviewPage />} />
           <Route path="/repositories/:id/chat" element={<RepoChatPage />} />
           <Route path="/repositories/:id/defect-risk" element={<DefectRiskPage />} />
+          <Route path="/repositories/:id/graph" element={<GraphAnalysisPage />} />
           <Route path="/health" element={<HealthPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
