@@ -344,3 +344,4 @@ export function DefectRiskPage(): React.ReactElement {
     </div>
   );
 }
+

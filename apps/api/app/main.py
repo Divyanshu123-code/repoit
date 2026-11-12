@@ -11,6 +11,7 @@ from app.api.ml import router as ml_router
 from app.api.rag import router as rag_router
 from app.api.repos import router as repos_router
 from app.api.search import router as search_router
+from app.api.static import router as static_router
 from app.core.config import get_settings
 from app.core.db import close_database
 from app.core.logging import setup_logging
@@ -61,6 +62,10 @@ def create_app() -> FastAPI:
     # Defect risk ML endpoints mounted at root and /api/v1
     application.include_router(ml_router)
     application.include_router(ml_router, prefix="/api/v1")
+
+    # Static analysis findings endpoints mounted at root and /api/v1
+    application.include_router(static_router)
+    application.include_router(static_router, prefix="/api/v1")
 
     return application
 

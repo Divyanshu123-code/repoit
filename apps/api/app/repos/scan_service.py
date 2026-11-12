@@ -252,6 +252,24 @@ async def run_scan_pipeline(
                     ml_err,
                 )
 
+            # STAGE 5c: Static Analysis Findings via Ruff (P4-01)
+            try:
+                from app.static.service import get_static_service
+
+                static_service = get_static_service()
+                await static_service.run_and_store_findings(
+                    session=session,
+                    repository_id=repo_id,
+                    repo_path=fetched.path,
+                    scan_id=scan.id,
+                )
+            except Exception as static_err:  # noqa: BLE001
+                logger.warning(
+                    "Static analysis during scan skipped for repo %s: %s",
+                    repo_id,
+                    static_err,
+                )
+
             await session.commit()
             await session.refresh(scan)
             logger.info("Scan completed successfully for repo %s (scan_id=%s)", repo_id, scan.id)

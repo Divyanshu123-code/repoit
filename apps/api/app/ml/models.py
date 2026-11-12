@@ -6,7 +6,7 @@ from typing import Any
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
 
@@ -83,10 +83,6 @@ class MLPrediction(Base):
         nullable=False,
         default=lambda: datetime.now(UTC),
     )
-
-    # Relationships
-    repository = relationship("Repository", backref="ml_predictions")
-    scan = relationship("RepositoryScan", backref="ml_predictions")
 
     def to_dict(self) -> dict[str, Any]:
         """Convert MLPrediction model instance to dictionary representation."""

@@ -12,6 +12,7 @@ from app.core.db import Base
 from app.indexing.models import CodeChunkRecord  # noqa: F401
 from app.ml.models import MLPrediction  # noqa: F401
 from app.repos.models import Repository, RepositoryScan  # noqa: F401
+from app.static.models import StaticFinding  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

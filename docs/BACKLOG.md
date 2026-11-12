@@ -38,7 +38,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P3-07 Inference service + `ml_predictions` storage + risk UI with model version + limitations text.
 
 ## Phase 4 — Static analysis & graph (week 9)
-- [ ] P4-01 Ruff runner + normalised finding schema. AC: findings stored with rule, severity, line.
+- [x] P4-01 Ruff runner + normalised finding schema. AC: findings stored with rule, severity, line.
 - [ ] P4-02 Import graph builder (NetworkX) + persisted edges.
 - [ ] P4-03 Impact analysis (reverse reachability, depth limit). AC: controlled-change fixture returns expected set.
 - [ ] P4-04 Graph UI (select node -> affected set) + findings table with triage filter.
