@@ -292,3 +292,194 @@ export async function triggerDefectRiskPrediction(
   }
   return response.json() as Promise<DefectRiskResponse>;
 }
+
+// --- Phase 4: Static Findings & Dependency Graph ---
+
+export interface StaticFindingItem {
+  id: string;
+  rule: string;
+  rule_url: string | null;
+  message: string;
+  severity: "error" | "warning" | "info";
+  category: string;
+  file_path: string;
+  line_number: number;
+  column_number: number | null;
+  end_line_number: number | null;
+  end_column_number: number | null;
+  fix_suggested: string | null;
+  source: "static";
+  created_at: string;
+}
+
+export interface FindingsSummary {
+  total_findings: number;
+  error_count: number;
+  warning_count: number;
+  info_count: number;
+}
+
+export interface StaticFindingsResponse {
+  repository_id: string;
+  source: "static";
+  summary: FindingsSummary;
+  findings: StaticFindingItem[];
+  total_count: number;
+  limit: number;
+  offset: number;
+}
+
+export async function fetchStaticFindings(
+  repoId: string,
+  severity?: string,
+  rule?: string,
+  file?: string
+): Promise<StaticFindingsResponse> {
+  const params = new URLSearchParams();
+  if (severity) params.append("severity", severity);
+  if (rule) params.append("rule", rule);
+  if (file) params.append("file", file);
+  params.append("limit", "100");
+
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const response = await fetch(`${API_BASE_URL}/repositories/${repoId}/findings${qs}`);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to fetch static findings (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<StaticFindingsResponse>;
+}
+
+export async function triggerStaticScan(repoId: string): Promise<StaticFindingsResponse> {
+  const response = await fetch(`${API_BASE_URL}/repositories/${repoId}/findings/scan`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Static scan failed (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<StaticFindingsResponse>;
+}
+
+export interface GraphNode {
+  id: string;
+  file_path: string;
+  in_degree: number;
+  out_degree: number;
+  is_internal: boolean;
+}
+
+export interface GraphEdgeItem {
+  id: string;
+  source_file: string;
+  target_module: string;
+  target_file: string | null;
+  import_statement: string | null;
+  line_number: number | null;
+  is_internal: boolean;
+  imported_symbols: string[];
+  source: "graph_derived";
+}
+
+export interface GraphSummary {
+  total_nodes: number;
+  internal_edges_count: number;
+  external_edges_count: number;
+  cycles_count: number;
+  is_dag: boolean;
+  density: number;
+  top_imported_modules: Array<{
+    file_path: string;
+    in_degree: number;
+    out_degree: number;
+  }>;
+}
+
+export interface GraphResponse {
+  repository_id: string;
+  scan_id: string | null;
+  source: "graph_derived";
+  summary: GraphSummary;
+  nodes: GraphNode[];
+  edges: GraphEdgeItem[];
+}
+
+export interface AffectedFileItem {
+  file_path: string;
+  depth: number;
+  impact_tier: "changed" | "direct" | "transitive";
+  seed_file: string;
+  dependency_chain: string[];
+  direct_imported_module: string | null;
+  in_degree: number;
+  out_degree: number;
+  source: "graph_derived";
+}
+
+export interface ImpactResponse {
+  repository_id: string;
+  changed_files: string[];
+  max_depth: number;
+  include_changed: boolean;
+  total_affected_count: number;
+  direct_affected_count: number;
+  transitive_affected_count: number;
+  total_repo_files: number;
+  impact_ratio: number;
+  affected_files: AffectedFileItem[];
+  source: "graph_derived";
+}
+
+export async function fetchRepositoryGraph(
+  repoId: string,
+  internalOnly: boolean = true
+): Promise<GraphResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/repositories/${repoId}/graph?internal_only=${internalOnly}`
+  );
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to fetch graph (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<GraphResponse>;
+}
+
+export async function fetchChangeImpact(
+  repoId: string,
+  changedFiles: string[],
+  maxDepth: number = 3,
+  includeChanged: boolean = false
+): Promise<ImpactResponse> {
+  const response = await fetch(`${API_BASE_URL}/repositories/${repoId}/graph/impact`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      changed_files: changedFiles,
+      max_depth: maxDepth,
+      include_changed: includeChanged,
+    }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Impact query failed (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<ImpactResponse>;
+}
+
+export async function triggerRebuildGraph(
+  repoId: string,
+  includeExternal: boolean = false
+): Promise<GraphResponse> {
+  const response = await fetch(`${API_BASE_URL}/repositories/${repoId}/graph/rebuild`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ include_external: includeExternal }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Rebuild graph failed (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<GraphResponse>;
+}
+

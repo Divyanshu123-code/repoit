@@ -41,7 +41,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P4-01 Ruff runner + normalised finding schema. AC: findings stored with rule, severity, line.
 - [x] P4-02 Import graph builder (NetworkX) + persisted edges.
 - [x] P4-03 Impact analysis (reverse reachability, depth limit). AC: controlled-change fixture returns expected set.
-- [ ] P4-04 Graph UI (select node -> affected set) + findings table with triage filter.
+- [x] P4-04 Graph UI (select node -> affected set) + findings table with triage filter.
 
 ## Phase 5 — AI debugging, tests, hardening (week 10–12)
 - [ ] P5-01 Debug assistant: finding + code + graph context -> evidence vs hypothesis sections.

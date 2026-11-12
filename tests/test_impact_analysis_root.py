@@ -8,9 +8,8 @@ Acceptance Criteria:
 
 import networkx as nx
 import pytest
-
-from app.graph.impact import ImpactAnalyzer, analyze_change_impact
-from app.graph.schemas import AffectedFileItem, ImpactRequest, ImpactResponse
+from app.graph.impact import ImpactAnalyzer
+from app.graph.schemas import AffectedFileItem, ImpactResponse
 
 
 def test_controlled_fixture_root() -> None:
