@@ -22,6 +22,7 @@ dependencies = [
     "radon>=6.0.1",
     "httpx>=0.27.0",
     "pgvector>=0.3.0",
+    "networkx>=3.2.1",
 ]
 
 [project.optional-dependencies]
@@ -49,7 +50,7 @@ warn_return_any = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["radon.*", "joblib.*", "packages.*"]
+module = ["radon.*", "joblib.*", "packages.*", "networkx.*"]
 ignore_missing_imports = true
 
 [tool.ruff]
