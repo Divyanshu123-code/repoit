@@ -44,7 +44,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P4-04 Graph UI (select node -> affected set) + findings table with triage filter.
 
 ## Phase 5 — AI debugging, tests, hardening (week 10–12)
-- [ ] P5-01 Debug assistant: finding + code + graph context -> evidence vs hypothesis sections.
+- [x] P5-01 Debug assistant: finding + code + graph context -> evidence vs hypothesis sections.
 - [ ] P5-02 Test generation endpoint; stored as `generated_tests` with status `unvalidated`.
 - [ ] P5-03 Docker sandbox runner (no network, limits) -> status `passed/failed/error`.
 - [ ] P5-04 Security pass: secrets redaction, token handling review, dependency audit.

@@ -41,6 +41,28 @@ class FakeLLMProvider(LLMProvider):
             if trigger in full_prompt:
                 return response
 
+        # Check if prompt is a Debug Assistant request
+        if "Senior Debugging Assistant" in full_prompt or "VERIFIED EVIDENCE" in full_prompt:
+            return (
+                "PROBABLE ROOT CAUSES:\n"
+                "- Default argument evaluation occurs at module import time in Python, creating shared state\n"
+                "- Function call in parameter default creates unexpected dependency cycles\n\n"
+                "RECOMMENDED FIX:\n"
+                "Use Annotated dependency injection pattern or set default to None and initialize inside the function body.\n\n"
+                "CODE DIFF:\n"
+                "```python\n"
+                "-def get_data(session: Session = Depends(get_db)):\n"
+                "+DatabaseSession = Annotated[Session, Depends(get_db)]\n"
+                "+def get_data(session: DatabaseSession = None):\n"
+                "```\n\n"
+                "REGRESSION RISKS:\n"
+                "- Callers expecting explicit parameter passing must adhere to type annotation\n"
+                "- Downstream modules depending on this function must not override default argument positional semantics\n\n"
+                "VERIFICATION PLAN:\n"
+                "- Run `ruff check app/core/db.py` to verify B008 is resolved\n"
+                "- Run `pytest tests/test_db.py` to ensure database connectivity tests pass"
+            )
+
         # Check if prompt contains citations markers like [file:line]
         citations = re.findall(r"\[([a-zA-Z0-9_\-\./]+:\d+(?:-\d+)?)\]", full_prompt)
 
