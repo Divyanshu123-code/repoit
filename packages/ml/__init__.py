@@ -39,8 +39,21 @@ from packages.ml.models import (
     SUPPORTED_MODELS,
     build_model_pipeline,
 )
+from packages.ml.szz import (
+    PythonDefectRecord,
+    extract_radon_features,
+    is_cosmetic_diff,
+    is_fix_commit,
+    mine_repository_szz,
+)
+from packages.ml.track_b import (
+    DATASET_V1_PATH,
+    generate_track_b_dataset,
+    load_track_b_dataset,
+)
 
 __all__ = [
+    "DATASET_V1_PATH",
     "DEFAULT_ARTIFACTS_DIR",
     "FEATURE_NAMES",
     "MODEL_METADATA",
@@ -54,6 +67,7 @@ __all__ = [
     "FoldMetrics",
     "ModelCVResult",
     "ModelCard",
+    "PythonDefectRecord",
     "ShapExplanationResult",
     "ShapFeatureImportance",
     "ThresholdMetricPoint",
@@ -61,11 +75,17 @@ __all__ = [
     "compute_shap_explanations",
     "evaluate_model_cv",
     "export_champion_artifact",
+    "extract_radon_features",
+    "generate_track_b_dataset",
     "inspect_dataset",
+    "is_cosmetic_diff",
+    "is_fix_commit",
     "load_cm1",
     "load_dataset",
     "load_kc1",
     "load_model_artifact",
+    "load_track_b_dataset",
+    "mine_repository_szz",
     "perform_error_analysis",
     "predict_defect_risk",
     "run_benchmark_suite",
