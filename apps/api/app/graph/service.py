@@ -9,12 +9,14 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graph.builder import ImportGraphBuilder
+from app.graph.impact import analyze_change_impact
 from app.graph.models import DependencyEdge
 from app.graph.schemas import (
     GraphEdgeItem,
     GraphNode,
     GraphResponse,
     GraphSummary,
+    ImpactResponse,
 )
 from app.parsing.models import ImportStatement
 
@@ -189,6 +191,37 @@ class DependencyGraphService:
             summary=summary,
             nodes=list(nodes_dict.values()),
             edges=edge_items,
+        )
+
+    async def compute_impact(
+        self,
+        session: AsyncSession,
+        repository_id: uuid.UUID,
+        changed_files: list[str],
+        max_depth: int = 3,
+        include_changed: bool = False,
+    ) -> ImpactResponse:
+        """Compute reverse reachability impact analysis for a set of changed files."""
+        # Query internal edges
+        stmt = select(DependencyEdge).where(
+            DependencyEdge.repository_id == repository_id,
+            DependencyEdge.is_internal.is_(True),
+        )
+        result = await session.execute(stmt)
+        edge_records = result.scalars().all()
+
+        nx_graph = nx.DiGraph()
+        for r in edge_records:
+            src = r.source_file
+            tgt = r.target_file if r.target_file else r.target_module
+            nx_graph.add_edge(src, tgt)
+
+        return analyze_change_impact(
+            graph=nx_graph,
+            repository_id=str(repository_id),
+            changed_files=changed_files,
+            max_depth=max_depth,
+            include_changed=include_changed,
         )
 
 
