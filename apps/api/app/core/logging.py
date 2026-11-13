@@ -6,6 +6,8 @@ import sys
 from datetime import UTC, datetime
 from typing import Any
 
+from app.ai.redaction import redact_dict_secrets, redact_secrets
+
 STANDARD_LOG_RECORD_ATTRS: set[str] = {
     "args",
     "asctime",
@@ -37,22 +39,24 @@ class JSONFormatter(logging.Formatter):
     """Custom formatter producing single-line structured JSON output."""
 
     def format(self, record: logging.LogRecord) -> str:
+        # Scrub secrets from message per Hard Rule 4
+        clean_msg = redact_secrets(record.getMessage())
         log_payload: dict[str, Any] = {
             "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "logger": record.name,
-            "message": record.getMessage(),
+            "message": clean_msg,
         }
 
         if record.exc_info:
-            log_payload["exception"] = self.formatException(record.exc_info)
+            log_payload["exception"] = redact_secrets(self.formatException(record.exc_info))
 
         if record.stack_info:
-            log_payload["stack_info"] = self.formatStack(record.stack_info)
+            log_payload["stack_info"] = redact_secrets(self.formatStack(record.stack_info))
 
-        # Extract extra structured fields
+        # Extract extra structured fields with recursive secret scrubbing
         extra_fields = {
-            k: v
+            k: redact_dict_secrets(v)
             for k, v in record.__dict__.items()
             if k not in STANDARD_LOG_RECORD_ATTRS and not k.startswith("_")
         }

@@ -47,7 +47,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P5-01 Debug assistant: finding + code + graph context -> evidence vs hypothesis sections.
 - [x] P5-02 Test generation endpoint; stored as `generated_tests` with status `unvalidated`.
 - [x] P5-03 Docker sandbox runner (no network, limits) -> status `passed/failed/error`.
-- [ ] P5-04 Security pass: secrets redaction, token handling review, dependency audit.
+- [x] P5-04 Security pass: secrets redaction, token handling review, dependency audit.
 - [ ] P5-05 Integration + E2E tests (ingest -> search -> scan -> impact).
 - [ ] P5-06 Deploy + demo repo + README + architecture diagram + evaluation report + resume bullets from measured numbers only.
 

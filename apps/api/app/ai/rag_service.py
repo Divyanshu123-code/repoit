@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.providers import LLMProvider, get_llm_provider
+from app.ai.redaction import redact_secrets
 from app.core.config import get_settings
 from app.indexing.models import SearchResultItem
 from app.indexing.search_service import SemanticSearchService
@@ -111,11 +112,12 @@ class RAGService:
                 model_version=self.llm.model_name,
             )
 
-        # 3. Assemble prompt with citations instructions
-        context_block = self._format_context(matches)
+        # 3. Assemble prompt with citations instructions (scrubbed per Hard Rule 4)
+        clean_context = redact_secrets(self._format_context(matches))
+        clean_question = redact_secrets(question)
         user_message = (
-            f"Codebase Evidence:\n{context_block}\n\n"
-            f"Question: {question}\n\n"
+            f"Codebase Evidence:\n{clean_context}\n\n"
+            f"Question: {clean_question}\n\n"
             f"Please provide an answer referencing the evidence with [file_path:line] citations:"
         )
 

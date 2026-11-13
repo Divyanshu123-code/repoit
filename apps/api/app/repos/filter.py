@@ -173,13 +173,21 @@ SECRET_CONTENT_REGEXES: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?:A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}"),
     # GitHub personal access tokens
     re.compile(r"(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{36,255}|github_pat_[a-zA-Z0-9_]{82}"),
+    # GitLab tokens
+    re.compile(r"glpat-[a-zA-Z0-9_\-]{20,255}"),
     # Slack tokens
     re.compile(r"xox[baprs]-[0-9a-zA-Z]{10,48}"),
     # Google API Key
     re.compile(r"AIza[0-9A-Za-z\\-_]{35}"),
+    # OpenAI & Anthropic API Keys
+    re.compile(
+        r"sk-[a-zA-Z0-9]{20,T3BlbkFJ[a-zA-Z0-9]{20,}|sk-proj-[a-zA-Z0-9_\-]{40,}|sk-ant-(?:api\d{2}-)?[a-zA-Z0-9_\-]{32,}"
+    ),
+    # JWT Tokens
+    re.compile(r"\beyJ[a-zA-Z0-9_-]{10,}\.eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\b"),
     # Generic high-confidence API key / secret assignment in code
     re.compile(
-        r"""(?i)(?:api_key|apikey|secret_key|auth_token)\s*[:=]\s*['"][a-zA-Z0-9_\-]{24,}['"]"""
+        r"""(?i)(?:api[_-]?key|secret[_-]?key|auth[_-]?token|client[_-]?secret|access[_-]?token|password)\s*[:=]\s*['"][a-zA-Z0-9_\-]{16,}['"]"""
     ),
 )
 
