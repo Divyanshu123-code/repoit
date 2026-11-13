@@ -36,17 +36,35 @@ def test_hard_rule_4_secret_redaction_engine() -> None:
     """Verify credential families are masked by redact_secrets (Hard Rule 4)."""
     samples = [
         ("AWS", "AKIA" + "IOSFODNN7EXAMPLE", "[REDACTED_AWS_KEY]"),
-        ("GitHub", "ghp_" + "1234567890abcdefghijklmnopqrstuvwxyzAB", "[REDACTED_GITHUB_TOKEN]"),
+        (
+            "GitHub",
+            "ghp_" + "1234567890abcdefghijklmnopqrstuvwxyzAB",
+            "[REDACTED_GITHUB_TOKEN]",
+        ),
         ("GitLab", "glpat-" + "1234567890abcdefghij", "[REDACTED_GITLAB_TOKEN]"),
         ("Slack", "xox" + "b-1234567890-abcdefghijklmnop", "[REDACTED_SLACK_TOKEN]"),
-        ("Google", "AIza" + "SyD-1234567890abcdefghijklmnopqrstuv", "[REDACTED_GOOGLE_API_KEY]"),
-        ("OpenAI", "sk-" + "proj-1234567890abcdefghijklmnopqrstuvwxyz1234567890", "[REDACTED_OPENAI_KEY]"),
-        ("Anthropic", "sk-ant-" + "api03-1234567890abcdefghijklmnopqrstuvwxyz1234567890", "[REDACTED_ANTHROPIC_KEY]"),
+        (
+            "Google",
+            "AIza" + "SyD-1234567890abcdefghijklmnopqrstuv",
+            "[REDACTED_GOOGLE_API_KEY]",
+        ),
+        (
+            "OpenAI",
+            "sk-" + "proj-1234567890abcdefghijklmnopqrstuvwxyz1234567890",
+            "[REDACTED_OPENAI_KEY]",
+        ),
+        (
+            "Anthropic",
+            "sk-ant-" + "api03-1234567890abcdefghijklmnopqrstuvwxyz1234567890",
+            "[REDACTED_ANTHROPIC_KEY]",
+        ),
     ]
     for label, raw, expected_token in samples:
         redacted = redact_secrets(f"Check {label}: {raw}")
         assert raw not in redacted, f"Raw secret leaked for {label}"
-        assert expected_token in redacted, f"Expected {expected_token} in redacted text for {label}"
+        assert expected_token in redacted, (
+            f"Expected {expected_token} in redacted text for {label}"
+        )
 
 
 def test_hard_rule_7_llm_providers_inherit_and_isolate() -> None:

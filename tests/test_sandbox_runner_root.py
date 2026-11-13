@@ -12,10 +12,8 @@ Acceptance Criteria:
 """
 
 import pytest
-
-from app.tests_gen.models import GeneratedTest
 from app.tests_gen.sandbox import DockerSandboxRunner, SandboxConfig, SandboxRunResult
-from app.tests_gen.schemas import BatchRunResponse, GeneratedTestResponse
+from app.tests_gen.schemas import BatchRunResponse
 
 
 def test_sandbox_config_security_bounds() -> None:
