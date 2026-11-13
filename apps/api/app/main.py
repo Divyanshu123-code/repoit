@@ -15,6 +15,7 @@ from app.api.rag import router as rag_router
 from app.api.repos import router as repos_router
 from app.api.search import router as search_router
 from app.api.static import router as static_router
+from app.api.tests_gen import router as tests_gen_router
 from app.core.config import get_settings
 from app.core.db import close_database
 from app.core.logging import setup_logging
@@ -86,6 +87,10 @@ def create_app() -> FastAPI:
     # AI debug assistant endpoints mounted at root and /api/v1
     application.include_router(debug_router)
     application.include_router(debug_router, prefix="/api/v1")
+
+    # Test generation endpoints mounted at root and /api/v1
+    application.include_router(tests_gen_router)
+    application.include_router(tests_gen_router, prefix="/api/v1")
 
     return application
 

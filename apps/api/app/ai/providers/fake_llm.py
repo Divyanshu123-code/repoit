@@ -63,6 +63,21 @@ class FakeLLMProvider(LLMProvider):
                 "- Run `pytest tests/test_db.py` to ensure database connectivity tests pass"
             )
 
+        # Check if prompt is a Test Generation request
+        if "Test Generation Agent" in full_prompt or "test function" in full_prompt.lower():
+            return (
+                "```python\n"
+                "import pytest\n\n"
+                "def test_repo_file_filter_symlinks():\n"
+                '    """Verify that path traversal symlinks are rejected."""\n'
+                "    from app.repos.filter import RepoFileFilter, FilterReason\n"
+                "    filter_svc = RepoFileFilter()\n"
+                "    res = filter_svc.check_path('../secret/key.pem')\n"
+                "    assert res.is_rejected is True\n"
+                "    assert res.reason == FilterReason.UNSAFE_SYMLINK\n"
+                "```"
+            )
+
         # Check if prompt contains citations markers like [file:line]
         citations = re.findall(r"\[([a-zA-Z0-9_\-\./]+:\d+(?:-\d+)?)\]", full_prompt)
 
