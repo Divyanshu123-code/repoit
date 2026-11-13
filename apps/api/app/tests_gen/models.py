@@ -119,6 +119,12 @@ class GeneratedTest(Base):
             kwargs["status"] = "unvalidated"
         if "test_framework" not in kwargs:
             kwargs["test_framework"] = "pytest"
+        if "model_version" not in kwargs:
+            kwargs["model_version"] = "gpt-4o-mini"
+        if "created_at" not in kwargs:
+            kwargs["created_at"] = datetime.now(UTC)
+        if "updated_at" not in kwargs:
+            kwargs["updated_at"] = datetime.now(UTC)
         super().__init__(**kwargs)
 
     def to_dict(self) -> dict[str, Any]:

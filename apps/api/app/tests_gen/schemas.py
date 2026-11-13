@@ -80,3 +80,32 @@ class GeneratedTestListResponse(BaseModel):
     failed_count: int
     source: Literal["llm_generated"] = "llm_generated"
     tests: list[GeneratedTestResponse] = Field(default_factory=list)
+
+
+class TestRunResultResponse(BaseModel):
+    """Execution output from Docker sandbox runner (P5-03).
+
+    Enforces Hard Rule 5: source labelled strictly as 'llm_generated'.
+    """
+
+    test_id: str
+    repository_id: str
+    status: Literal["passed", "failed", "error"]
+    exit_code: int
+    execution_duration_ms: int
+    execution_output: str | None = None
+    error_message: str | None = None
+    runner_type: str = "docker"
+    source: Literal["llm_generated"] = "llm_generated"
+
+
+class BatchRunResponse(BaseModel):
+    """Summary of batch sandbox execution for repository tests."""
+
+    repository_id: str
+    total_executed: int
+    passed_count: int
+    failed_count: int
+    error_count: int
+    source: Literal["llm_generated"] = "llm_generated"
+    results: list[GeneratedTestResponse] = Field(default_factory=list)

@@ -16,6 +16,7 @@ from __future__ import annotations
 import logging
 import re
 import uuid
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +26,7 @@ from app.ai.redaction import redact_secrets
 from app.indexing.models import CodeChunkRecord
 from app.static.models import StaticFinding
 from app.tests_gen.models import GeneratedTest
+from app.tests_gen.sandbox import DockerSandboxRunner, get_sandbox_runner
 from app.tests_gen.schemas import (
     GeneratedTestListResponse,
     GeneratedTestResponse,
@@ -176,6 +178,106 @@ class TestGenerationService:
         res = await session.execute(stmt)
         return res.scalar_one_or_none()
 
+    async def execute_sandbox_test(
+        self,
+        session: AsyncSession,
+        repository_id: uuid.UUID,
+        test_id: uuid.UUID,
+        sandbox_runner: DockerSandboxRunner | None = None,
+    ) -> GeneratedTest:
+        """Run generated test in Docker sandbox runner and update status to passed/failed/error."""
+        runner = sandbox_runner or get_sandbox_runner()
+        test = await self.get_test(session, repository_id, test_id)
+        if test is None:
+            raise ValueError(
+                f"Generated test '{test_id}' not found for repository '{repository_id}'"
+            )
+
+        # Fetch supporting target files from code chunks
+        supporting_files = await self._gather_supporting_files(
+            session=session,
+            repository_id=repository_id,
+            target_file=test.target_file,
+        )
+
+        # Run test in sandbox
+        result = await runner.run_test(
+            test_code=test.test_code,
+            test_file_path=test.test_file_path,
+            supporting_files=supporting_files,
+        )
+
+        # Update test entity state (passed, failed, error)
+        test.status = result.status
+        output = (result.stdout + "\n" + result.stderr).strip()
+        test.execution_output = output or None
+        test.error_message = result.error_message
+        test.execution_duration_ms = result.execution_duration_ms
+        test.updated_at = datetime.now(UTC)
+
+        await session.commit()
+        await session.refresh(test)
+
+        logger.info(
+            "Executed test %s in sandbox runner (%s): status=%s (duration=%dms)",
+            test.test_name,
+            result.runner_type,
+            test.status,
+            test.execution_duration_ms or 0,
+        )
+
+        return test
+
+    async def execute_all_unvalidated(
+        self,
+        session: AsyncSession,
+        repository_id: uuid.UUID,
+        sandbox_runner: DockerSandboxRunner | None = None,
+    ) -> list[GeneratedTest]:
+        """Batch execute all unvalidated tests for a repository."""
+        stmt = select(GeneratedTest).where(
+            GeneratedTest.repository_id == repository_id,
+            GeneratedTest.status == "unvalidated",
+        )
+        res = await session.execute(stmt)
+        unvalidated_tests = res.scalars().all()
+
+        executed_list: list[GeneratedTest] = []
+        for t in unvalidated_tests:
+            executed = await self.execute_sandbox_test(
+                session=session,
+                repository_id=repository_id,
+                test_id=t.id,
+                sandbox_runner=sandbox_runner,
+            )
+            executed_list.append(executed)
+
+        return executed_list
+
+    async def _gather_supporting_files(
+        self,
+        session: AsyncSession,
+        repository_id: uuid.UUID,
+        target_file: str,
+    ) -> dict[str, str]:
+        """Reconstruct supporting target files from code chunks."""
+        stmt = (
+            select(CodeChunkRecord)
+            .where(
+                CodeChunkRecord.repository_id == repository_id,
+                CodeChunkRecord.file_path == target_file,
+            )
+            .order_by(CodeChunkRecord.start_line.asc())
+        )
+        res = await session.execute(stmt)
+        chunks = res.scalars().all()
+        if not chunks:
+            return {}
+
+        combined_content = "\n\n".join(c.content for c in chunks)
+        clean_target = target_file.lstrip("/")
+        return {clean_target: combined_content}
+
     def to_response(self, record: GeneratedTest) -> GeneratedTestResponse:
         """Map entity to Pydantic response."""
         return GeneratedTestResponse(
@@ -193,9 +295,17 @@ class TestGenerationService:
             execution_output=record.execution_output,
             execution_duration_ms=record.execution_duration_ms,
             source="llm_generated",  # Hard Rule 5
-            model_version=record.model_version,
-            created_at=record.created_at.isoformat(),
-            updated_at=record.updated_at.isoformat(),
+            model_version=record.model_version or "default",
+            created_at=(
+                record.created_at.isoformat()
+                if record.created_at
+                else datetime.now(UTC).isoformat()
+            ),
+            updated_at=(
+                record.updated_at.isoformat()
+                if record.updated_at
+                else datetime.now(UTC).isoformat()
+            ),
         )
 
     async def _gather_code_context(

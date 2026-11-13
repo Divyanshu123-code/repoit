@@ -1,12 +1,15 @@
-"""FastAPI router for AI Test Generation (P5-02).
+"""FastAPI router for AI Test Generation and Docker Sandbox Execution (P5-02, P5-03).
 
 Endpoints:
     POST /repositories/{id}/tests/generate -> Generate and store test with status 'unvalidated'
     GET  /repositories/{id}/tests          -> List generated tests
     GET  /repositories/{id}/tests/{test_id} -> Get test details
+    POST /repositories/{id}/tests/{test_id}/run -> Execute test in Docker sandbox (status: passed/failed/error)
+    POST /repositories/{id}/tests/run-all      -> Batch execute unvalidated tests
 
 Enforces:
-    - Hard Rule 5: source labelled strictly as 'llm_generated'.
+    - Hard Rule 3: Repository code runs only in sandbox.
+    - Hard Rule 5: Source labelled strictly as 'llm_generated'.
 """
 
 import uuid
@@ -18,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db import get_db_session
 from app.repos.models import Repository
 from app.tests_gen.schemas import (
+    BatchRunResponse,
     GeneratedTestListResponse,
     GeneratedTestResponse,
     GenerateTestRequest,
@@ -135,3 +139,82 @@ async def get_generated_test_endpoint(
         )
 
     return test_service.to_response(test_record)
+
+
+@router.post(
+    "/{test_id}/run",
+    response_model=GeneratedTestResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Run generated test in Docker sandbox runner",
+    description=(
+        "Executes test inside isolated container or process with strict resource limits "
+        "(no network, memory cap, cpu quota, timeout). "
+        "Transitions status from 'unvalidated' to 'passed', 'failed', or 'error'."
+    ),
+)
+async def run_generated_test_endpoint(
+    repository_id: uuid.UUID,
+    test_id: uuid.UUID,
+    session: DatabaseSession = None,  # type: ignore[assignment]
+    test_service: TestServiceDep = None,  # type: ignore[assignment]
+) -> GeneratedTestResponse:
+    """Run single generated test in sandbox and update status."""
+    repo = await session.get(Repository, repository_id)
+    if repo is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Repository with id '{repository_id}' not found",
+        )
+
+    try:
+        updated_test = await test_service.execute_sandbox_test(
+            session=session,
+            repository_id=repository_id,
+            test_id=test_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+    return test_service.to_response(updated_test)
+
+
+@router.post(
+    "/run-all",
+    response_model=BatchRunResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Run all unvalidated tests in Docker sandbox runner",
+)
+async def run_all_tests_endpoint(
+    repository_id: uuid.UUID,
+    session: DatabaseSession = None,  # type: ignore[assignment]
+    test_service: TestServiceDep = None,  # type: ignore[assignment]
+) -> BatchRunResponse:
+    """Batch execute all unvalidated tests for a repository."""
+    repo = await session.get(Repository, repository_id)
+    if repo is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Repository with id '{repository_id}' not found",
+        )
+
+    executed_records = await test_service.execute_all_unvalidated(
+        session=session,
+        repository_id=repository_id,
+    )
+
+    passed = len([r for r in executed_records if r.status == "passed"])
+    failed = len([r for r in executed_records if r.status == "failed"])
+    error = len([r for r in executed_records if r.status == "error"])
+
+    return BatchRunResponse(
+        repository_id=str(repository_id),
+        total_executed=len(executed_records),
+        passed_count=passed,
+        failed_count=failed,
+        error_count=error,
+        source="llm_generated",
+        results=[test_service.to_response(r) for r in executed_records],
+    )
