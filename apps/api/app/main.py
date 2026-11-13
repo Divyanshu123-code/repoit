@@ -5,6 +5,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.debug import router as debug_router
 from app.api.graph import router as graph_router
@@ -44,6 +45,15 @@ def create_app() -> FastAPI:
         version="0.1.0",
         lifespan=lifespan,
         debug=settings.DEBUG,
+    )
+
+    # Enable CORS for frontend clients
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     # Health probes mounted at root

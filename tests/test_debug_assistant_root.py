@@ -83,3 +83,4 @@ def test_debug_request_schema() -> None:
     assert req.file_path == "app/main.py"
     assert req.rule == "S101"
     assert req.finding_id is None
+
