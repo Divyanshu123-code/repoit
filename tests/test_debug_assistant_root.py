@@ -55,7 +55,9 @@ def test_debug_assistant_models_and_rule_5() -> None:
         probable_root_causes=["FastAPI Depends called inside signature default"],
         recommended_fix="Use Annotated[Session, Depends(get_session)]",
         code_diff="-def get_db(session=Depends()):\n+def get_db(session: Annotated[Session, Depends()]):",
-        regression_risks=["Downstream callers in app/api/routes.py must not pass positional args"],
+        regression_risks=[
+            "Downstream callers in app/api/routes.py must not pass positional args"
+        ],
         verification_plan=["Run ruff check app/core/db.py", "Run pytest tests/"],
     )
     assert hypotheses.source == "llm_generated"
@@ -83,4 +85,3 @@ def test_debug_request_schema() -> None:
     assert req.file_path == "app/main.py"
     assert req.rule == "S101"
     assert req.finding_id is None
-
