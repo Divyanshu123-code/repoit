@@ -49,7 +49,7 @@ Status legend: [ ] todo, [~] in progress, [x] done. One task = one branch = one 
 - [x] P5-03 Docker sandbox runner (no network, limits) -> status `passed/failed/error`.
 - [x] P5-04 Security pass: secrets redaction, token handling review, dependency audit.
 - [x] P5-05 Integration + E2E tests (ingest -> search -> scan -> impact).
-- [ ] P5-06 Deploy + demo repo + README + architecture diagram + evaluation report + resume bullets from measured numbers only.
+- [x] P5-06 Deploy + demo repo + README + architecture diagram + evaluation report + resume bullets from measured numbers only.
 
 ## Cut line
 If time runs short, cut in this order: P5-03 sandbox, P4-04 graph UI polish, P3-05/06 Track B. Never cut: eval harness, tests, citations.

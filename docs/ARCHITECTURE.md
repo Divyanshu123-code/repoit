@@ -1,66 +1,211 @@
-# RepoPilot AI — Architecture
+# RepoPilot AI — System Architecture & Design
 
-## 1. Style
-Modular monolith + background worker. One deployable API, one worker, one Postgres (pgvector), one Redis. Modules have strict boundaries so they can be split later; microservices now would add cost without benefit.
+RepoPilot AI connects to Python repositories, indexes their code structure via Tree-sitter AST, provides grounded conversational answers with bracketed line citations via RAG, estimates defect risk using trained scikit-learn/XGBoost models, surfaces static lint findings via Ruff, maps dependencies and calculates blast radius with NetworkX, diagnoses findings with an AI Debug Assistant, and executes AI-generated pytest suites in a constrained Docker sandbox.
 
-## 2. Components
-| Component | Tech | Responsibility |
-|---|---|---|
-| Web | React + TS (Vite) | Repo overview, search, chat, risk table, findings, graph view |
-| API | FastAPI | Auth, repo/scan/chat endpoints, job creation, read APIs |
-| Worker | RQ or Arq + Redis | Ingestion, parsing, chunking, embedding, scans |
-| DB | PostgreSQL + pgvector | Relational data + vectors |
-| ML package | scikit-learn, XGBoost | Training/eval (offline) and inference (in API/worker) |
-| AI layer | provider interfaces | Embeddings + LLM, swappable |
+---
 
-## 3. Backend module layout (`apps/api/app/`)
+## 1. System Topology & Architecture Diagram
+
+```mermaid
+flowchart TD
+    subgraph Client ["Client & Presentation Layer"]
+        UI["Web Dashboard (React + TypeScript + Vite)"]
+    end
+
+    subgraph Gateway ["Reverse Proxy & Ingress"]
+        Nginx["Nginx / Vite Proxy (:5173 / :80)"]
+    end
+
+    subgraph AppServer ["Application Backend (FastAPI :8000)"]
+        API["FastAPI REST Routers"]
+        AuthSvc["Auth & Repo Ingestion Service"]
+        SearchSvc["Semantic Search & Chunker"]
+        RAGSvc["RAG Assistant (Citations + Abstention)"]
+        MLSvc["Defect Inference Service (XGBoost/RF v2.0.0)"]
+        StaticSvc["Ruff Static Analysis Normalizer"]
+        GraphSvc["NetworkX Dependency Graph & Impact Engine"]
+        DebugSvc["AI Debug Assistant (Evidence vs Hypothesis)"]
+        TestGenSvc["Test Generation & Verification Service"]
+    end
+
+    subgraph WorkerLayer ["Async Execution & Workers"]
+        Worker["Background Worker (Scan Pipeline)"]
+        Sandbox["Docker Sandbox Runner (--network none, 512MB RAM, 1 CPU, 20s)"]
+    end
+
+    subgraph DataStorage ["Data & Storage Layer"]
+        PG[("PostgreSQL + pgvector")]
+        RedisQueue[("Redis Broker & Cache")]
+        MLArtifacts["Model Artifacts (champion_model.joblib + model_card.json)"]
+    end
+
+    subgraph ExternalLLM ["AI Provider Boundary (Hard Rule 7)"]
+        LLMInterface["LLMProvider / EmbeddingProvider"]
+        Redactor["Redaction Engine (Hard Rule 4: 12 Token Patterns)"]
+        OpenAI["OpenAI API (gpt-4o-mini / text-embedding-3-small)"]
+        FakeProvider["Deterministic Fake Provider (Offline & CI)"]
+    end
+
+    UI --> Nginx
+    Nginx --> API
+    API --> AuthSvc
+    API --> SearchSvc
+    API --> RAGSvc
+    API --> MLSvc
+    API --> StaticSvc
+    API --> GraphSvc
+    API --> DebugSvc
+    API --> TestGenSvc
+
+    AuthSvc --> Worker
+    Worker --> PG
+    Worker --> RedisQueue
+    SearchSvc --> PG
+    MLSvc --> MLArtifacts
+    MLSvc --> PG
+    StaticSvc --> PG
+    GraphSvc --> PG
+    TestGenSvc --> Sandbox
+    TestGenSvc --> PG
+
+    RAGSvc --> Redactor
+    DebugSvc --> Redactor
+    TestGenSvc --> Redactor
+    Redactor --> LLMInterface
+    LLMInterface --> OpenAI
+    LLMInterface --> FakeProvider
 ```
-core/        config, logging, security, db session
-auth/        sessions/OAuth
-repos/       repository + file ingestion, filtering
-parsing/     tree-sitter wrappers, symbol + metric extraction
-indexing/    chunking, embeddings, pgvector store
-retrieval/   semantic search, (later) hybrid + rerank
-assistant/   RAG orchestration, prompts, citation builder, abstention
-risk/        feature building, model loading, inference
-static/      ruff runner + normaliser (finding schema)
-graph/       import graph, impact analysis (NetworkX)
-tests_gen/   test generation + (later) sandbox runner
-ai/providers/  EmbeddingProvider, LLMProvider interfaces + implementations
-api/         routers (thin) -> services
+
+---
+
+## 2. Component Directory Layout
+
 ```
-Rule: routers call services; services call repositories; modules talk through service interfaces only.
+repopilot/
+├── apps/
+│   ├── api/
+│   │   ├── alembic/                # Database migrations (Alembic)
+│   │   ├── app/
+│   │   │   ├── ai/                 # Providers, RAG service, Redaction engine, Debug assistant
+│   │   │   ├── api/                # FastAPI REST endpoints (thin routers)
+│   │   │   ├── core/               # Pydantic-settings config, structured JSON logging, DB session
+│   │   │   ├── graph/              # NetworkX import graph builder, impact analysis, models
+│   │   │   ├── indexing/           # Symbol & window chunker, pgvector search service, models
+│   │   │   ├── ml/                 # Defect risk inference service, SHAP attribution, models
+│   │   │   ├── parsing/            # Tree-sitter AST parser, radon metrics, models
+│   │   │   ├── repos/              # Ingestion, safe shallow clone, file filter, scan service
+│   │   │   ├── static/             # Ruff runner, diagnostic normalizer, models
+│   │   │   └── tests_gen/          # Test generation service, Docker sandbox runner, models
+│   │   └── tests/                  # 143 passing unit, integration, and API tests
+│   ├── web/                        # React 18 + TS UI (Vite, Tailwind-styled components, TanStack Query)
+│   │   ├── src/
+│   │   │   ├── api/                # Typed API client with HTTP error handling
+│   │   │   ├── pages/              # Repositories, Overview, Chat, Defect Risk, Graph Analysis
+│   │   │   └── App.tsx             # React Router routing
+│   │   └── package.json            # Web dependencies and build script
+│   └── worker/                     # Asynchronous task worker skeleton
+├── packages/
+│   └── ml/                         # Standalone ML training and evaluation package
+│       ├── artifacts/              # Serialized champion model (v2.0.0) & model_card.json
+│       ├── data/                   # Authentic NASA (CM1, KC1) and mined Python dataset (v1)
+│       ├── szz.py                  # PyDriller git commit miner & SZZ labeling
+│       ├── track_b.py              # Multi-project dataset builder
+│       ├── train_track_b.py        # Leave-One-Project-Out cross-validation runner
+│       └── export_model.py         # Joblib pipeline exporter & model card generator
+├── demo/                           # Turnkey demonstration repository & packaging tools
+│   ├── sample_repo/                # Authentic multi-tier Python project with intentional finding
+│   └── package_demo.py             # Automates zip creation for instant ingestion
+├── docs/                           # Architecture, Decisions, Backlog, Progress, and Evaluation reports
+├── infra/                          # Docker Compose, Dockerfiles, and reverse proxy configs
+└── tests/                          # 142 root-level and cross-module automated verification tests
+```
 
-## 4. Pipelines
-**Ingestion (worker job `scan_repo`)**
-1. Fetch repo (shallow clone of public repo / uploaded zip) into temp dir, no code execution.
-2. Filter: ignore binaries, vendored/generated dirs, large files, secrets patterns (`.env`, keys).
-3. Parse `.py` with Tree-sitter -> files, symbols (module/class/function), imports, line ranges.
-4. Compute metrics per function/module (LOC, cyclomatic complexity, Halstead via `radon`, fan-in/out).
-5. Chunk by symbol (fallback: sliding window with overlap) -> embed -> store in pgvector.
-6. Build import graph -> store edges.
-7. Run Ruff -> normalise -> store findings.
-8. Run risk model on compatible modules -> store predictions with model version.
-9. Mark scan complete; every step records status so failed scans can resume/report.
+---
 
-**RAG query**
-question -> embed -> top-k vector search (filtered by repo) -> assemble context (chunks + related findings + graph neighbours) -> LLM with "answer only from evidence" prompt -> answer + citations (file, line range). If retrieval score below threshold -> abstain with "not enough evidence".
+## 3. Core Architectural Pipelines
 
-## 5. ML design
-- `packages/ml/` is a standalone, reproducible package: data loading, preprocessing pipeline, training, evaluation, report generation, artifact export (`joblib` + `model_card.json`).
-- Track A: PROMISE/NASA (CM1 or KC1) baseline. Models: Dummy, LogReg, DecisionTree, RandomForest, XGBoost. Stratified CV, tuning on train only, test untouched until final.
-- Track B: self-mined Python dataset (PyDriller + SZZ labelling; features via radon). Project-wise split. This is the model served to users once validated; Track A stays as documented baseline.
-- Metrics: precision, recall, F1, ROC-AUC, PR-AUC, confusion matrix; SHAP for explanations.
-- Serving: load artifact at startup; response includes `model_version`, `risk_probability`, `risk_band`, top contributing features.
+### 3.1 Repository Ingestion & Scan Pipeline (`scan_repo`)
 
-## 6. Security
-- Repo code is untrusted: parsing only, no execution; generated tests run only in a sandbox (Docker, no network, CPU/mem/time limits) — Phase 5.
-- Tokens encrypted at rest, least-privilege scopes, revocable. MVP: public repos only.
-- Secrets redaction before logs/prompts; opt-in before sending code to external providers.
-- Retention: user can delete a repo and all derived data (cascade).
+```mermaid
+sequenceDiagram
+    participant User
+    participant API as FastAPI Router
+    participant Worker as Scan Worker
+    participant Filter as RepoFileFilter
+    participant Parser as TreeSitterParser
+    participant Metrics as RadonMetrics
+    participant Ruff as RuffScanner
+    participant ML as DefectInference
+    participant Graph as ImportGraphBuilder
+    participant DB as PostgreSQL (pgvector)
 
-## 7. Observability
-Structured JSON logs with request/scan IDs, `/healthz` + `/readyz`, per-stage scan timing, LLM latency/token logging (no content), basic metrics endpoint.
+    User->>API: POST /repositories (URL or ZIP)
+    API->>Worker: Enqueue scan_repo job
+    Worker->>Worker: Stage 1: Safe Fetch (Shallow clone / ZIP unpack, disabled hooks)
+    Worker->>Filter: Stage 2: Filter (drop binaries, vendor dirs, secrets, size caps)
+    Worker->>Parser: Stage 3: Parse (Tree-sitter AST functions, classes, imports)
+    Worker->>Metrics: Stage 4: Compute Metrics (LOC, cyclomatic complexity, Halstead, fan-in/out)
+    Worker->>DB: Stage 5a: Persist summary metrics & set status='ready'
+    Worker->>ML: Stage 5b: Predict defect risk for modules (Track B v2.0.0)
+    ML->>DB: Persist ml_predictions (source: ml_predicted)
+    Worker->>Ruff: Stage 5c: Run isolated Ruff scan
+    Ruff->>DB: Persist static_findings (source: static)
+    Worker->>Graph: Stage 5d: Parse imports & build NetworkX DiGraph
+    Graph->>DB: Persist dependency_edges (source: graph_derived)
+    Worker-->>API: Scan completed successfully
+```
 
-## 8. Environments
-`docker compose up` runs web, api, worker, postgres(pgvector), redis. CI (GitHub Actions): lint, types, tests, build images.
+### 3.2 Grounded Code Search & RAG Q&A (`POST /repositories/{id}/ask`)
+1. **Secret Redaction**: Incoming query passes through `redact_secrets()` prior to processing.
+2. **Embedding & Retrieval**: Vector similarity search on PostgreSQL pgvector (`cosine` distance) extracts top-k matching code chunks.
+3. **Abstention Gate**: If top match score falls below `RAG_ABSTENTION_THRESHOLD` (default 0.35), the service immediately abstains: `"Not enough evidence in the codebase to answer this question."`
+4. **Context Assembly**: Evidence blocks are formatted with strict identifiers `[file_path:start_line-end_line]`.
+5. **Provider Completion**: Request is routed through `LLMProvider` interface to generate answers grounded strictly in the cited evidence.
+
+### 3.3 Change Impact Analysis (`POST /repositories/{id}/graph/impact`)
+1. Reverse reachability on directed dependency graph ($A \to B$ implies $A$ imports $B$, so changing $B$ impacts $A$).
+2. Traversal computes shortest paths, fan-out blast radius, and categorizes impact tiers:
+   - **Seed/Changed**: Depth 0.
+   - **Direct Impact**: Depth 1 (immediate importers).
+   - **Transitive Impact**: Depth $\ge 2$ (indirect callers).
+3. Enforces cycle termination on cyclic dependencies and limits depth to `max_depth` (1..5).
+4. Strictly labels output with `source: graph_derived`.
+
+### 3.4 AI Debug Assistant (`POST /repositories/{id}/debug`)
+1. Correlates static finding (Ruff rule, severity, code location) with code chunk context and NetworkX dependency callers.
+2. Applies secret scrubbing (`redact_secrets`) across code and query.
+3. Partitions output into:
+   - **EVIDENCE**: Verified findings facts, code excerpt, and graph callers (`source: static` / `graph_derived`).
+   - **HYPOTHESIS**: Probable root causes, suggested fix, code diff, regression risks on callers, and verification plan (`source: llm_generated`).
+
+### 3.5 AI Test Generation & Docker Sandbox Execution (`POST /repositories/{id}/tests/{id}/run`)
+1. Synthesizes pytest unit or regression test cases targeting specific symbols or findings.
+2. Stores records in `generated_tests` with initial status `unvalidated` (`source: llm_generated`).
+3. Executes test in `DockerSandboxRunner` enforcing Hard Rule 3:
+   - `--network none` (network disabled).
+   - `--memory 512m` and `--cpus 1.0` (resource limits).
+   - `--security-opt no-new-privileges:true` (privilege escalation prevention).
+   - Read-only workspace mount (`-v {dir}:/workspace:ro`).
+   - Process timeout limit (20s).
+4. Deterministic status transition:
+   - Exit code 0 $\rightarrow$ `status: "passed"`
+   - Exit code 1 (assertion failure) $\rightarrow$ `status: "failed"`
+   - Exit code > 1 or timeout $\rightarrow$ `status: "error"`
+
+---
+
+## 4. Operational Hard Rules & Compliance
+
+| Rule | Description | Implementation Details |
+| :--- | :--- | :--- |
+| **Rule 1** | One backlog item at a time | Sequential branches (`feat/P*-*`) merged into `main` after verification. |
+| **Rule 2** | Every change ships with tests | 285 automated tests across unit, integration, and root E2E suites. |
+| **Rule 3** | Untrusted repository code | Non-evaluating Tree-sitter AST, isolated Ruff, and sandboxed Docker runner. |
+| **Rule 4** | Never log or send secrets/tokens | 12-pattern regex engine (`redact_secrets`), recursive dict scrubber, and structured JSON logger scrubbing. |
+| **Rule 5** | Explicit source labeling | Every response schema tagged: `static`, `ml_predicted`, `graph_derived`, or `llm_generated`. |
+| **Rule 6** | Probabilistic risk disclaimers | Defect predictions include model version (`v2.0.0`) and "risk estimates, never confirmed bugs" disclaimers. |
+| **Rule 7** | Swappable AI provider layer | All LLM/embedding calls route strictly through `LLMProvider` / `EmbeddingProvider`. |
+| **Rule 8** | Dependency justification | All additions documented with one-line justifications in commits and pyproject. |
+| **Rule 9** | Schema changes via Alembic | 6 discrete Alembic migrations managing relational tables and indexes. |
+| **Rule 10**| No requirement guessing | Ambiguities resolved through architecture specs and documented decisions. |
+| **Rule 11**| ML Model Evaluation Reports | Comprehensive benchmarks and model comparisons documented in `docs/eval/`. |
