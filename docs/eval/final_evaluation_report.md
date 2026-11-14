@@ -95,3 +95,4 @@ Trained on `flask`, `requests`, and `urllib3`; tested on completely unseen proje
   - `ruff check`: Clean (0 warnings or errors).
   - `mypy --strict app`: Clean (0 issues across 64 source files).
   - Web frontend: Production TypeScript and Vite builds passing cleanly.
+

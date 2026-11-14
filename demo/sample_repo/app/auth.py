@@ -29,3 +29,4 @@ class AuthService:
         roles.append("authenticated")
         expected = hash_secret(secret)
         return verify_secret(secret, expected)
+

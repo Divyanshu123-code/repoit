@@ -15,3 +15,4 @@ def test_database_query() -> None:
     users = db.execute_query("SELECT * FROM users")
     assert len(users) == 2
     assert users[0]["username"] == "alice"
+

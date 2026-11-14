@@ -15,3 +15,4 @@ This repository is a purpose-built demonstration project showcasing the capabili
    - Semantic vector search and RAG assistant answer questions about password hashing, authentication flow, and payment fees with bracketed `[file:lines]` citations.
 6. **Test Generation & Sandbox Runner**:
    - Synthesizes pytest unit tests and executes them inside an isolated Docker sandbox container.
+

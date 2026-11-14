@@ -24,3 +24,4 @@
 - **Implemented change impact analysis engine** using directed reverse reachability on NetworkX module graphs to simulate blast radius, dependency chains, and blast radius tiers in sub-20 milliseconds.
 - **Engineered credential scrubbing engine** detecting 12 secret families (AWS, GitHub, GitLab, Slack, Google, OpenAI, Anthropic, private keys, JWTs, DB connection passwords) with automatic redaction across all external LLM prompts and structured JSON application logs.
 - **Authored comprehensive test suite of 285 automated tests** across unit, integration, and end-to-end pipeline verification suites with zero flake and 100% CI compliance.
+

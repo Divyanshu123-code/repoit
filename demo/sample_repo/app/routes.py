@@ -15,3 +15,4 @@ class UserController:
         if success:
             return {"status": "ok", "user": username}
         return {"status": "unauthorized"}
+

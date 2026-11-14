@@ -19,3 +19,4 @@ class DatabasePool:
     def close(self) -> None:
         """Close pool connections."""
         self.is_connected = False
+

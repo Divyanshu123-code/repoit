@@ -15,3 +15,4 @@ def verify_secret(secret: str, expected_hash: str, salt: str = "repopilot_salt")
     """Verify secret against expected hash."""
     computed = hash_secret(secret, salt=salt)
     return hmac.compare_digest(computed, expected_hash)
+
