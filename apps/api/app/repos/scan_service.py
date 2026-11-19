@@ -10,6 +10,8 @@ from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.indexing.chunker import chunk_python_source
+from app.indexing.search_service import SemanticSearchService
 from app.parsing import (
     RepoMetricsSummary,
     TreeSitterPythonParser,
@@ -78,6 +80,7 @@ async def run_scan_pipeline(
     2. filtering: Prune binaries, vendor dirs, secrets, size limits
     3. parsing: Tree-sitter symbol, import, line range extraction
     4. metrics: LOC, cyclomatic complexity, Halstead, fan-in/fan-out
+    4b. indexing: Chunk + embed code into vector store for RAG
     5. completed: Persist summary and set repository status to ready
 
     Args:
@@ -199,6 +202,34 @@ async def run_scan_pipeline(
             stage_progress["metrics"]["avg_mi"] = round(
                 metrics_summary.avg_maintainability_index, 2
             )
+
+            # STAGE 4b: CHUNK INDEXING (semantic embeddings for RAG)
+            try:
+                scan.current_stage = "indexing"
+                stage_progress["indexing"] = {"started_at": datetime.now(UTC).isoformat()}
+                scan.stage_progress = stage_progress
+                await session.commit()
+
+                search_service = SemanticSearchService()
+                all_chunks = []
+                for rel_path, code_str in parsed_modules_code.items():
+                    file_chunks = chunk_python_source(code_str, file_path=rel_path)
+                    all_chunks.extend(file_chunks)
+
+                indexed_count = await search_service.index_chunks(session, repo_id, all_chunks)
+                stage_progress["indexing"]["completed_at"] = datetime.now(UTC).isoformat()
+                stage_progress["indexing"]["chunk_count"] = indexed_count
+                logger.info(
+                    "Indexed %d chunks for repo %s",
+                    indexed_count,
+                    repo_id,
+                )
+            except Exception as idx_err:  # noqa: BLE001
+                logger.warning(
+                    "Chunk indexing during scan skipped for repo %s: %s",
+                    repo_id,
+                    idx_err,
+                )
 
             # STAGE 5: COMPLETED
             now = datetime.now(UTC)

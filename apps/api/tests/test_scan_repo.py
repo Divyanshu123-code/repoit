@@ -320,3 +320,76 @@ async def test_api_trigger_and_get_scan(sample_zip_bytes: bytes) -> None:
             assert len(resp_list.json()) >= 1
     finally:
         app.dependency_overrides.pop(get_db_session, None)
+
+
+# ---------------------------------------------------------------------------
+# Chunk indexing integration test (P2-01 wired into P1-06 scan pipeline)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_scan_pipeline_stores_code_chunks(
+    sample_zip_bytes: bytes,
+) -> None:
+    """After run_scan_pipeline with a ZIP, CodeChunkRecord rows must exist in DB.
+
+    Verifies the fix for the RAG abstention bug: chunk indexing is now wired
+    directly into run_scan_pipeline so the vector store is populated on every scan.
+    """
+    from sqlalchemy import func, select
+    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+    from sqlalchemy.orm import sessionmaker
+
+    from app.core.db import Base
+    from app.indexing.models import CodeChunkRecord
+
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
+    async with engine.begin() as conn:
+        # Import all models so metadata is complete
+        import app.auth.models
+        import app.indexing.models
+        import app.repos.models  # noqa: F401
+
+        await conn.run_sync(Base.metadata.create_all)
+
+    async_session_factory = sessionmaker(  # type: ignore[call-overload]
+        bind=engine, class_=AsyncSession, expire_on_commit=False
+    )
+
+    repo_id = uuid.uuid4()
+    async with async_session_factory() as session:
+        # Seed a repository record
+        from app.repos.models import Repository
+
+        repo = Repository(
+            id=repo_id,
+            source="zip",
+            url=None,
+            full_name="test/chunk-index-repo",
+            status="registered",
+        )
+        session.add(repo)
+        await session.commit()
+
+        # Run the full scan pipeline
+        scan = await run_scan_pipeline(
+            session=session,
+            repo_id=repo_id,
+            zip_bytes=sample_zip_bytes,
+        )
+
+    assert scan.status == "completed", f"Scan failed: {scan.error_message}"
+
+    # Verify chunks were written
+    async with async_session_factory() as session:
+        result = await session.execute(
+            select(func.count())
+            .select_from(CodeChunkRecord)
+            .where(CodeChunkRecord.repository_id == repo_id)
+        )
+        chunk_count = result.scalar() or 0
+
+    assert chunk_count > 0, (
+        "Expected code chunks in DB after scan, got 0. "
+        "run_scan_pipeline must call SemanticSearchService.index_chunks()."
+    )
