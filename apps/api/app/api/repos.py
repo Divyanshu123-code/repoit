@@ -1,5 +1,7 @@
 """API router for repository registration and metadata endpoints."""
 
+import asyncio
+import logging
 import uuid
 from typing import Annotated
 
@@ -7,7 +9,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.db import get_db_session
+from app.core.db import get_db_session, get_session_factory
 from app.repos.scan_service import (
     get_latest_scan_for_repo,
     list_scans_for_repo,
@@ -27,6 +29,8 @@ from app.repos.service import (
     register_github_repository,
     register_zip_repository,
 )
+
+logger = logging.getLogger("repopilot.api.repos")
 
 router = APIRouter(prefix="/repositories", tags=["repositories"])
 
@@ -63,6 +67,19 @@ async def register_repository(
 
     try:
         repo = await register_github_repository(session, payload.url)
+        if repo.status == "registered":
+            repo_id = repo.id
+
+            async def _bg_scan() -> None:
+                session_factory = get_session_factory()
+                async with session_factory() as bg_session:
+                    try:
+                        await run_scan_pipeline(bg_session, repo_id)
+                    except Exception as err:  # noqa: BLE001
+                        logger.warning("Background initial scan for %s failed: %s", repo_id, err)
+
+            asyncio.create_task(_bg_scan())
+
         return RepoResponse.model_validate(repo)
     except InvalidRepoURLError as exc:
         return JSONResponse(
@@ -89,6 +106,22 @@ async def upload_repository_archive(
 
     try:
         repo = await register_zip_repository(session, filename, content)
+        if repo.status == "registered":
+            repo_id = repo.id
+            archive_data = content
+
+            async def _bg_zip_scan() -> None:
+                session_factory = get_session_factory()
+                async with session_factory() as bg_session:
+                    try:
+                        await run_scan_pipeline(bg_session, repo_id, zip_bytes=archive_data)
+                    except Exception as err:  # noqa: BLE001
+                        logger.warning(
+                            "Background initial zip scan for %s failed: %s", repo_id, err
+                        )
+
+            asyncio.create_task(_bg_zip_scan())
+
         return RepoResponse.model_validate(repo)
     except InvalidUploadError as exc:
         return JSONResponse(

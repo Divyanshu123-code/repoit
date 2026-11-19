@@ -7,19 +7,19 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/healthz": {
-        target: "http://localhost:8000",
+        target: "http://127.0.0.1:8000",
         changeOrigin: true,
       },
       "/readyz": {
-        target: "http://localhost:8000",
+        target: "http://127.0.0.1:8000",
         changeOrigin: true,
       },
       "/repositories": {
-        target: "http://localhost:8000",
+        target: "http://127.0.0.1:8000",
         changeOrigin: true,
       },
       "/api": {
-        target: "http://localhost:8000",
+        target: "http://127.0.0.1:8000",
         changeOrigin: true,
       },
     },

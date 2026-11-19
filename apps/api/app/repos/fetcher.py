@@ -16,6 +16,9 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Self
+from urllib.parse import urlparse
+
+import httpx
 
 from app.core.config import get_settings
 
@@ -164,8 +167,24 @@ async def safe_clone_github_repo(
             stderr=asyncio.subprocess.PIPE,
             env=env,
         )
-    except Exception as exc:
-        raise RepoCloneFailedError(f"Subprocess execution failed: {exc}") from exc
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Git clone process creation failed for %s (%s). Attempting archive fallback...",
+            url,
+            exc,
+        )
+        try:
+            return await _fallback_fetch_github_archive(
+                url=url,
+                target_dir=target_dir,
+                timeout_seconds=timeout,
+                max_size_bytes=max_bytes,
+                branch=branch,
+            )
+        except Exception as fallback_exc:
+            raise RepoCloneFailedError(
+                f"Subprocess execution failed: {exc}. Archive fallback also failed: {fallback_exc}"
+            ) from fallback_exc
 
     try:
         _stdout_bytes, stderr_bytes = await asyncio.wait_for(
@@ -182,7 +201,25 @@ async def safe_clone_github_repo(
 
     if process.returncode != 0:
         error_msg = stderr_bytes.decode(errors="replace").strip()
-        raise RepoCloneFailedError(error_msg or f"Exited with code {process.returncode}")
+        logger.warning(
+            "Git clone failed for %s (exit code %d: %s). Attempting archive fallback...",
+            url,
+            process.returncode,
+            error_msg,
+        )
+        try:
+            return await _fallback_fetch_github_archive(
+                url=url,
+                target_dir=target_dir,
+                timeout_seconds=timeout,
+                max_size_bytes=max_bytes,
+                branch=branch,
+            )
+        except Exception as fallback_exc:
+            logger.warning("Archive fallback for %s also failed: %s", url, fallback_exc)
+            raise RepoCloneFailedError(
+                f"{error_msg or f'Exited with code {process.returncode}'}. Archive fallback also failed: {fallback_exc}"
+            ) from fallback_exc
 
     # Verify size limit after clone
     total_size, file_count = calculate_directory_size(target_dir)
@@ -190,6 +227,52 @@ async def safe_clone_github_repo(
         raise RepoSizeLimitExceededError(total_size, max_bytes)
 
     return total_size, file_count
+
+
+async def _fallback_fetch_github_archive(
+    url: str,
+    target_dir: Path,
+    timeout_seconds: int,
+    max_size_bytes: int,
+    branch: str | None = None,
+) -> tuple[int, int]:
+    """Fallback to fetching a public repository via ZIP archive over HTTPS if git clone fails."""
+    parsed = urlparse(url)
+    segments = [seg for seg in parsed.path.strip("/").split("/") if seg]
+    if len(segments) != 2:
+        raise RepoCloneFailedError(f"Cannot parse owner/repository from URL '{url}'")
+
+    owner, repo_name = segments[0], segments[1].removesuffix(".git")
+    branches_to_try = [branch] if branch else ["main", "master", "HEAD"]
+
+    async with httpx.AsyncClient(
+        timeout=float(timeout_seconds),
+        follow_redirects=True,
+    ) as client:
+        last_error: Exception | None = None
+        for b in branches_to_try:
+            archive_url = f"https://codeload.github.com/{owner}/{repo_name}/zip/refs/heads/{b}"
+            try:
+                response = await client.get(archive_url)
+                if response.status_code == 200 and response.content:
+                    return safe_extract_zip(
+                        zip_bytes=response.content,
+                        target_dir=target_dir,
+                        max_size_bytes=max_size_bytes,
+                    )
+                if response.status_code == 404:
+                    continue
+                response.raise_for_status()
+            except Exception as exc:  # noqa: BLE001
+                last_error = exc
+                continue
+
+        if last_error:
+            raise last_error
+
+    raise RepoCloneFailedError(
+        f"Unable to download repository archive for '{owner}/{repo_name}' (tried branches: {', '.join(branches_to_try)})."
+    )
 
 
 def safe_extract_zip(

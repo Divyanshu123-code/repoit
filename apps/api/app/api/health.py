@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 
-from app.core.db import check_database_health
+from app.core.db import check_database_health, get_database_mode
 
 router = APIRouter(tags=["health"])
 
@@ -30,7 +30,9 @@ async def readyz() -> JSONResponse:
             content=payload,
         )
 
+    mode = get_database_mode()
+    db_status = "connected" if mode == "primary" else "connected (sqlite_fallback)"
     return JSONResponse(
         status_code=status.HTTP_200_OK,
-        content={"status": "ready", "database": "connected"},
+        content={"status": "ready", "database": db_status},
     )

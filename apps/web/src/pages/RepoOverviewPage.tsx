@@ -62,6 +62,19 @@ export const RepoOverviewPage: React.FC = () => {
     },
   });
 
+  // Auto-trigger scan on arrival if repository was just registered
+  React.useEffect(() => {
+    if (
+      repository &&
+      repository.status === "registered" &&
+      latestScan === null &&
+      !scanMutation.isPending &&
+      !scanMutation.isSuccess
+    ) {
+      scanMutation.mutate();
+    }
+  }, [repository?.status, latestScan, scanMutation.isPending, scanMutation.isSuccess]);
+
   if (isRepoLoading) {
     return (
       <div style={{ maxWidth: "1100px", margin: "3rem auto", textAlign: "center", color: "#64748b" }}>
@@ -361,15 +374,44 @@ export const RepoOverviewPage: React.FC = () => {
           <div
             style={{
               marginTop: "1rem",
-              padding: "0.75rem 1rem",
+              padding: "1rem",
               backgroundColor: "#fef2f2",
               color: "#991b1b",
               borderRadius: "6px",
-              fontSize: "0.85rem",
+              fontSize: "0.875rem",
               border: "1px solid #fecaca",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "1rem",
             }}
           >
-            <strong>Scan Failed:</strong> {latestScan.error_message || "Unknown error during execution."}
+            <div>
+              <div style={{ fontWeight: 700, marginBottom: "0.25rem" }}>Scan Failed</div>
+              <div>{latestScan.error_message || "Unknown error during execution."}</div>
+              {repository.source === "github" && (
+                <div style={{ marginTop: "0.5rem", fontSize: "0.8rem", color: "#7f1d1d" }}>
+                  Tip: Ensure the repository is public and accessible on GitHub. You can also upload a ZIP archive from the Repository Hub.
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => scanMutation.mutate()}
+              disabled={scanMutation.isPending}
+              style={{
+                backgroundColor: "#dc2626",
+                color: "#ffffff",
+                padding: "0.5rem 1rem",
+                borderRadius: "6px",
+                border: "none",
+                fontWeight: 600,
+                fontSize: "0.85rem",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Retry Scan
+            </button>
           </div>
         )}
       </div>

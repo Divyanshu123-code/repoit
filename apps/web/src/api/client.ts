@@ -101,7 +101,12 @@ export interface SearchResponse {
   results: SearchResultItem[];
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? `http://${window.location.hostname}:8000`
+    : "");
 
 export async function fetchHealthz(): Promise<HealthResponse> {
   const response = await fetch(`${API_BASE_URL}/healthz`);

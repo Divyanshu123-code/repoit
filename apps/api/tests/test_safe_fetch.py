@@ -328,3 +328,42 @@ async def test_real_git_local_shallow_clone_and_size_limit(tmp_path: Path) -> No
 
     assert exc_info.value.max_bytes == 10
     assert exc_info.value.size_bytes > 10
+
+
+@pytest.mark.asyncio
+async def test_safe_clone_github_repo_fallback_on_git_failure(tmp_path: Path) -> None:
+    """Verify that when git clone fails, the fetcher falls back to HTTP zip archive download."""
+    target_dir = tmp_path / "cloned"
+    target_dir.mkdir()
+
+    sample_zip = create_sample_zip({"sample.py": b"print('fallback worked!')\n"})
+
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.content = sample_zip
+
+    mock_client = AsyncMock()
+    mock_client.get.return_value = mock_response
+    mock_client.__aenter__.return_value = mock_client
+    mock_client.__aexit__.return_value = None
+
+    # Force git clone to exit with error code 128
+    mock_proc = AsyncMock()
+    mock_proc.communicate.return_value = (b"", b"fatal: network blocked by policy")
+    mock_proc.returncode = 128
+
+    with (
+        patch("asyncio.create_subprocess_exec", return_value=mock_proc),
+        patch("httpx.AsyncClient", return_value=mock_client),
+    ):
+        size, count = await safe_clone_github_repo(
+            url="https://github.com/octocat/Hello-World",
+            target_dir=target_dir,
+            timeout_seconds=5,
+            max_size_bytes=1024 * 1024,
+        )
+
+    assert count >= 1
+    assert size > 0
+    assert (target_dir / "sample.py").exists()
+    assert (target_dir / "sample.py").read_text() == "print('fallback worked!')\n"

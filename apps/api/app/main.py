@@ -17,7 +17,7 @@ from app.api.search import router as search_router
 from app.api.static import router as static_router
 from app.api.tests_gen import router as tests_gen_router
 from app.core.config import get_settings
-from app.core.db import close_database
+from app.core.db import close_database, init_database
 from app.core.logging import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -32,6 +32,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         "Starting RepoPilot API",
         extra={"environment": settings.ENVIRONMENT, "debug": settings.DEBUG},
     )
+    await init_database()
     yield
     logger.info("Shutting down RepoPilot API")
     await close_database()
