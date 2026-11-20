@@ -64,3 +64,31 @@
 - 2026-11-03: P0-03 FastAPI skeleton complete. Set up apps/api with Python 3.12, pyproject.toml, virtualenv at apps/api/.venv, pydantic-settings config, structured JSON logging, SQLAlchemy 2.x async session setup, Alembic with empty first migration, /healthz and /readyz (with 503 on DB unreachable), pytest suite with 7 passing tests, ruff format/lint clean, and mypy --strict clean on app/. Next: P0-02.
 - 2026-11-03: P0-01 monorepo scaffold complete. Created folder structure (apps/web, apps/api, apps/worker, packages/ml, infra) with placeholder READMEs, comprehensive .gitignore, .env.example, root README with project overview and folder map, and scaffold verification tests. Next: P0-03.
 - 2026-11-03: Kickoff pack created. Next: P0-01 monorepo scaffold.
+
+## 2026-11-20 — Fix: RAG AI Assistant (Codebase Q&A now works)
+
+**What was done:**
+- Root-caused the "⚠ Abstention: Not enough evidence in codebase" bug for ALL questions.
+- **Bug 1 — Missing indexing stage**: `run_scan_pipeline` in `scan_service.py` parsed all 146 modules but never called `SemanticSearchService.index_chunks()`. Added stage 4b "indexing" that chunks every parsed file and embeds them into `code_chunks`. Now 1,059 chunks are indexed with 1536-dim embeddings on every scan.
+- **Bug 2 — Threshold mismatch with fake embeddings**: `FakeEmbeddingProvider` produces deterministic SHA-256-based vectors with cosine similarities of ~0.1–0.3. The `RAG_ABSTENTION_THRESHOLD=0.35` blocked all results. Created `apps/api/.env` (gitignored) with `RAG_ABSTENTION_THRESHOLD=0.0` for local development.
+- Added `test_scan_pipeline_stores_code_chunks()` integration test verifying chunks land in DB after scan.
+- 145 backend tests pass, ruff + mypy --strict clean, committed as `f444238`.
+
+**What is next:**
+- Register a real repo via the UI and confirm RAG answers are grounded in that codebase.
+- Phase 2 completion: test the `/ask` endpoint with OpenAI key for real semantic similarity.
+
+## 2026-11-20 — Feature: ChatGPT for GitHub Repositories (Multi-turn Conversational AI Upgrade)
+
+**What was done:**
+- Transformed the one-shot RAG assistant into a full conversational "ChatGPT for GitHub Repositories" experience.
+- **Backend - Schema & Migration**: Added `chat_sessions` and `chat_messages` tables with cascade deletion via Alembic migration `d4e5f6a7b8c9_create_chat_sessions.py`. Registered models in SQLite fallback initializer.
+- **Backend - Repository Context Builder (`context_builder.py`)**: Injects comprehensive codebase intelligence into prompts: repository metrics (total lines, SLOC, file count, avg cyclomatic complexity, maintainability), top complex/largest modules, defect risk predictions from Track B ML model (with Hard Rule 6 probabilistic disclaimers), static code findings by severity, and architectural dependency hubs.
+- **Backend - Conversational Service (`conversation_service.py`)**: Multi-turn conversation orchestration with session history window, secret redaction (Hard Rule 4), semantic search retrieval, and source-attributed responses (Hard Rule 5).
+- **Backend - Conversational API Router (`app/api/chat.py`)**: Added `POST/GET /repositories/{id}/chat/sessions`, `GET/DELETE /repositories/{id}/chat/sessions/{sid}`, and `POST /repositories/{id}/chat/sessions/{sid}/messages`.
+- **Frontend - ChatGPT UI (`RepoChatPage.tsx`)**: Upgraded to a two-column ChatGPT layout with session sidebar ("New Chat", history list, session deletion), zero-dependency Markdown renderer (headers, bold, code blocks, lists, blockquotes), expandable citations and code excerpts panel with similarity scores, and quick ask prompt carousel.
+- **Verification**: 148 backend tests + 147 root tests pass (295 tests green). Ruff formatting and `mypy --strict` 100% clean. Frontend Vite build clean.
+
+**What is next:**
+- User testing across different repositories via web dashboard at http://localhost:5173.
+- Optional: Add streaming response support (`Server-Sent Events`).

@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.chat import router as chat_router
 from app.api.debug import router as debug_router
 from app.api.graph import router as graph_router
 from app.api.health import router as health_router
@@ -72,6 +73,10 @@ def create_app() -> FastAPI:
     # RAG assistant endpoints mounted at root and /api/v1
     application.include_router(rag_router)
     application.include_router(rag_router, prefix="/api/v1")
+
+    # Conversational chat assistant endpoints mounted at root and /api/v1
+    application.include_router(chat_router)
+    application.include_router(chat_router, prefix="/api/v1")
 
     # Defect risk ML endpoints mounted at root and /api/v1
     application.include_router(ml_router)

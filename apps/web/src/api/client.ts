@@ -488,3 +488,103 @@ export async function triggerRebuildGraph(
   return response.json() as Promise<GraphResponse>;
 }
 
+// ---------------------------------------------------------------------------
+// Multi-turn Conversational Chat API (ChatGPT for GitHub Repos)
+// ---------------------------------------------------------------------------
+
+export interface ChatMessageItem {
+  id: string;
+  session_id: string;
+  role: "user" | "assistant";
+  content: string;
+  abstained: boolean;
+  citations: RAGCitation[];
+  source: string;
+  model_version: string;
+  created_at: string;
+}
+
+export interface ChatSessionItem {
+  id: string;
+  repository_id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  messages: ChatMessageItem[];
+}
+
+export async function createChatSession(
+  repoId: string,
+  title: string = "New Chat"
+): Promise<ChatSessionItem> {
+  const response = await fetch(`${API_BASE_URL}/repositories/${repoId}/chat/sessions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Create chat session failed (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<ChatSessionItem>;
+}
+
+export async function listChatSessions(repoId: string): Promise<ChatSessionItem[]> {
+  const response = await fetch(`${API_BASE_URL}/repositories/${repoId}/chat/sessions`);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `List chat sessions failed (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<ChatSessionItem[]>;
+}
+
+export async function fetchChatSession(
+  repoId: string,
+  sessionId: string
+): Promise<ChatSessionItem> {
+  const response = await fetch(`${API_BASE_URL}/repositories/${repoId}/chat/sessions/${sessionId}`);
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Fetch chat session failed (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<ChatSessionItem>;
+}
+
+export async function sendChatMessage(
+  repoId: string,
+  sessionId: string,
+  content: string,
+  maxCitations: number = 5
+): Promise<ChatMessageItem> {
+  const response = await fetch(
+    `${API_BASE_URL}/repositories/${repoId}/chat/sessions/${sessionId}/messages`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content, max_citations: maxCitations }),
+    }
+  );
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Send chat message failed (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<ChatMessageItem>;
+}
+
+export async function deleteChatSession(
+  repoId: string,
+  sessionId: string
+): Promise<{ status: string; session_id: string }> {
+  const response = await fetch(
+    `${API_BASE_URL}/repositories/${repoId}/chat/sessions/${sessionId}`,
+    {
+      method: "DELETE",
+    }
+  );
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || `Delete chat session failed (HTTP ${response.status})`);
+  }
+  return response.json() as Promise<{ status: string; session_id: string }>;
+}
+

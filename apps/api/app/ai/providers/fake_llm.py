@@ -78,6 +78,107 @@ class FakeLLMProvider(LLMProvider):
                 "```"
             )
 
+        # Check if prompt is a Conversational ChatGPT assistant request
+        if (
+            "conversational ChatGPT companion" in full_prompt
+            or "VERIFIED REPOSITORY INTELLIGENCE" in full_prompt
+        ):
+            citations = re.findall(r"\[([a-zA-Z0-9_\-\./]+:\d+(?:-\d+)?)\]", full_prompt)
+            citation_str = " ".join(f"[{c}]" for c in citations[:3]) if citations else ""
+
+            user_query = ""
+            for m in reversed(scrubbed_messages):
+                if m.get("role") == "user":
+                    user_query = m.get("content", "").lower()
+                    break
+
+            if any(
+                k in user_query
+                for k in [
+                    "purpose",
+                    "what is this",
+                    "overview",
+                    "architecture",
+                    "explain the project",
+                ]
+            ):
+                return (
+                    f"### Repository Purpose & Architecture Overview\n\n"
+                    f"**RepoPilot AI** is an intelligent code understanding and quality platform designed for Python codebases. "
+                    f"It ingests repositories safely, indexes code semantics via AST and embeddings, and provides multi-dimensional repository insights.\n\n"
+                    f"#### Key Architectural Capabilities:\n"
+                    f"1. **Tree-sitter Parsing & Metrics**: Parses AST functions, symbols, and extracts cyclomatic complexity and maintainability metrics.\n"
+                    f"2. **Conversational RAG Q&A**: Answers architectural and logic queries grounded in verified codebase excerpts {citation_str}.\n"
+                    f"3. **ML Defect Risk Prediction**: Evaluates module defect probabilities using trained classification pipelines.\n"
+                    f"4. **Static Linting & Dependency Graph**: Identifies code issues via Ruff and computes reverse-reachability blast radiuses using NetworkX.\n\n"
+                    f"You can ask me to dive deeper into any file, function, metric, or dependency!"
+                )
+
+            if any(
+                k in user_query
+                for k in ["most", "largest", "loc", "lines of code", "biggest file", "complexity"]
+            ):
+                # Extract largest files from repository intelligence if present
+                largest_match = re.search(
+                    r"#### Top Largest Modules:\s*\n((?:- `[^`]+`:[^\n]+\n?)+)", full_prompt
+                )
+                if largest_match:
+                    modules_text = largest_match.group(1).strip()
+                    return (
+                        f"### Code Volume & Largest Files\n\n"
+                        f"Based on the repository scan metrics, here are the modules with the highest lines of code and complexity:\n\n"
+                        f"{modules_text}\n\n"
+                        f"These core modules handle the heaviest application logic and are prime candidates for unit testing and modularization."
+                    )
+                return f"Based on the repository metrics, the core service modules contain the largest volume of logic {citation_str}."
+
+            if any(k in user_query for k in ["risk", "defect", "bug", "ml", "prediction"]):
+                risk_match = re.search(
+                    r"#### Defect Risk Estimates[^\n]*\n[^\n]*\n((?:- `[^`]+`:[^\n]+\n?)+)",
+                    full_prompt,
+                )
+                if risk_match:
+                    risk_text = risk_match.group(1).strip()
+                    return (
+                        f"### Defect Risk Analysis (ML Model Track B)\n\n"
+                        f"> ⚠️ **Probabilistic Risk Estimates**: These are machine-learning estimates based on code churn, Halstead metrics, and complexity, *never confirmed bugs* (Hard Rule 6).\n\n"
+                        f"Here are the modules flagged with higher statistical defect probability:\n\n"
+                        f"{risk_text}\n\n"
+                        f"I recommend reviewing high-risk modules with focused unit tests and static analysis."
+                    )
+
+            if any(
+                k in user_query for k in ["dependency", "dependencies", "import", "graph", "hub"]
+            ):
+                hubs_match = re.search(
+                    r"#### Architectural Hubs[^\n]*\n((?:- `[^`]+`:[^\n]+\n?)+)", full_prompt
+                )
+                if hubs_match:
+                    hubs_text = hubs_match.group(1).strip()
+                    return (
+                        f"### Dependency Hubs & Architecture Structure\n\n"
+                        f"The internal import graph shows the following key architectural hubs:\n\n"
+                        f"{hubs_text}\n\n"
+                        f"Changes to these central modules have a higher transitive impact blast radius across the repository."
+                    )
+
+            # Default conversational synthesis
+            if citation_str:
+                return (
+                    f"### Code Analysis\n\n"
+                    f"Based on the codebase evidence, the requested functionality and logic is implemented in {citation_str}.\n\n"
+                    f"Here is an overview of what the relevant code does:\n"
+                    f"- Coordinates module interactions and implements error handling\n"
+                    f"- Enforces domain constraints and validated input schemas\n\n"
+                    f"Let me know if you would like me to explain any specific function or write tests for it!"
+                )
+
+            return (
+                "### Repository Insights\n\n"
+                "Based on the repository index and profile, this codebase is structured around modular service layers. "
+                "You can ask me about specific files, function implementations, dependency relationships, or defect risks!"
+            )
+
         # Check if prompt contains citations markers like [file:line]
         citations = re.findall(r"\[([a-zA-Z0-9_\-\./]+:\d+(?:-\d+)?)\]", full_prompt)
 

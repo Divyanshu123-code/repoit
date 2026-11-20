@@ -91,6 +91,7 @@ async def init_database() -> None:
     # Ensure tables exist when running on SQLite
     if _engine is not None and _engine.url.drivername.startswith("sqlite"):
         import app.auth.models
+        import app.chat.models
         import app.graph.models
         import app.indexing.models
         import app.ml.models
