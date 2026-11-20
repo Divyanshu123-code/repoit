@@ -63,15 +63,53 @@ class RepositoryContext:
                 f"Maintainability Index: {avg_mi}/100"
             )
 
-            # Top largest modules
+            # Categorized Module Manifest
             modules = metrics.get("modules", [])
+            if modules:
+                lines.append("\n#### Complete Repository Module Manifest:")
+                cat_api: list[str] = []
+                cat_services: list[str] = []
+                cat_data: list[str] = []
+                cat_core: list[str] = []
+                cat_tests: list[str] = []
+
+                for m in modules:
+                    path = str(m.get("path", ""))
+                    loc = m.get("loc", 0)
+                    p_lower = path.lower()
+                    entry = f"- `{path}` ({loc} LOC)"
+                    if any(k in p_lower for k in ["router", "api", "endpoint", "view"]):
+                        cat_api.append(entry)
+                    elif any(k in p_lower for k in ["service", "engine", "worker", "logic", "pipeline"]):
+                        cat_services.append(entry)
+                    elif any(k in p_lower for k in ["model", "schema", "database", "db.", "alembic"]):
+                        cat_data.append(entry)
+                    elif any(k in p_lower for k in ["test", "fixture", "mock"]):
+                        cat_tests.append(entry)
+                    else:
+                        cat_core.append(entry)
+
+                if cat_api:
+                    lines.append("\n**API & Routing Layer:**\n" + "\n".join(cat_api))
+                if cat_services:
+                    lines.append("\n**Business Services & Logic:**\n" + "\n".join(cat_services))
+                if cat_data:
+                    lines.append("\n**Data Models, Schemas & Persistence:**\n" + "\n".join(cat_data))
+                if cat_core:
+                    lines.append("\n**Core Application & Configuration:**\n" + "\n".join(cat_core))
+                if cat_tests and len(cat_tests) <= 15:
+                    lines.append("\n**Test Suites:**\n" + "\n".join(cat_tests))
+                elif cat_tests:
+                    lines.append(f"\n**Test Suites:** {len(cat_tests)} automated test files")
+
+            # Top largest modules
             if modules:
                 sorted_by_loc = sorted(
                     modules,
                     key=lambda m: int(m.get("loc", 0)),
                     reverse=True,
                 )[:5]
-                lines.append("\n#### Top Largest Modules:")
+                lines.append("\n#### Top Largest Modules by Code Volume:")
                 for m in sorted_by_loc:
                     path = m.get("path", "unknown")
                     loc = m.get("loc", 0)
